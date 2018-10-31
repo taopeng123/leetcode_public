@@ -1,1 +1,1 @@
-# leetcode_public
+This repository contains the share leetcode solution code.
