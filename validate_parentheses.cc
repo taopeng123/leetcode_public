@@ -71,11 +71,31 @@ int main() {
 		"(()",
 		"a(b)",
 		"()a(b))()",
-		"((a)()a(ab)(((a()"
+		"((a)()a(ab)(((a()",
+		"(())"
+	};
+
+	vector<string> expected_outputs = {
+		"",
+		"",
+		"",
+		"()",
+		"",
+		"()", 
+		"()",
+		"()",
+		"a(b)",
+		"()a(b)()",
+		"(a)()a(ab)a()",
+		"(())"
 	};
 	
 	for(unsigned i = 0; i < test_strings.size(); ++i) {
-		cout << test_strings[i] << " -> " << sol.validate(test_strings[i]) << endl;
+		string test = test_strings[i];
+		string output = sol.validate(test_strings[i]);
+		string expected = expected_outputs[i];
+		string is_passed = (output == expected ? "Passed" : "!!! Failed !!!");
+		cout << test << " -> " << output << ", " << is_passed << endl;
 	}
 }
 
