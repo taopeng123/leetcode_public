@@ -50,7 +50,7 @@ public:
 
 		vector<int**> map(n, NULL); 
 		vector<int> values(n, 0);
-		vector<int*> values_pointers(n, 0);
+		vector<int*> values_pointers(n, NULL);
 		unordered_set<int> set;
 
 		// Traverse the positions reversely:
