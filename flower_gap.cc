@@ -6,6 +6,7 @@ Run:
 ./flower_gap
 
 Input:
+(The example in the question:)
 schedule = {3, 2, 5, 1, 9, 7, 10, 8, 6, 4};
 k = 1 to 10.
 
