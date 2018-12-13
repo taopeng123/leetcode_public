@@ -1,4 +1,9 @@
 /*
+Link to question:
+https://docs.google.com/document/d/1auenQM6UlIGc9MClezndUslPOpxbJ9GVI1_czjU5p3E/edit
+
+For this code:
+
 Compile: 
 g++ -std=c++11 -o flower_gap flower_gap.cc
 
