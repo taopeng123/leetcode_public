@@ -2,23 +2,18 @@
 Link to question:
 https://docs.google.com/document/d/1auenQM6UlIGc9MClezndUslPOpxbJ9GVI1_czjU5p3E/edit
 
-
 For this code:
-
 
 Compile: 
 g++ -std=c++11 -o flower_gap flower_gap.cc
 
-
 Run:
 ./flower_gap
-
 
 Input:
 (The example in the question:)
 schedule = {3, 2, 5, 1, 9, 7, 10, 8, 6, 4};
 k = 1 to 10.
-
 
 Output:
 For k = 1, result = true
