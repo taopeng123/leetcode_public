@@ -1,0 +1,6440 @@
+catlist
+
+************************
+pr21. Merge Two Sorted Lists, Easy
+
+Question: 
+
+Merge two sorted linked lists and return it as a new list. The new list should be made by splicing together the nodes of the first two lists.
+
+Example:
+
+Input: 1->2->4, 1->3->4
+Output: 1->1->2->3->4->4
+
+tao: splice means combine.
+
+==
+Key: This is essentially insertion sort. Add the nodes of l2 into l1. Use a pointer pre to scan in l1 from begin to end. Use a pointer called l2 to denote the current node in list l2. For every node in l2 (its pointer is called l2), scan pre in l1 from its beginning, if pre.next is greater than l2, then add l2 to the right of pre.
+
+==
+Code Ganker: this algorithm has time complexity O(m + n)
+(tao: note that each list will only be traversed once), where m and n are
+the lengths of the two lists. Space complexity is O(1).
+
+==
+C++ code:
+
+class Solution {
+public: 
+    ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
+        if(!l1) return l2;
+        if(!l2) return l1;
+
+        ListNode* fake_head = new ListNode(0);
+        fake_head->next = l1;
+
+        ListNode* p = fake_head;
+
+        while(p->next && l2) {
+            if(p->next->val >= l2->val) {
+                ListNode* l2Next = l2->next;
+                l2->next = p->next;
+                p->next = l2;
+                l2 = l2Next;
+            }
+
+            p = p->next;
+        }
+
+        // This is the case when we visited all nodes in l1, but there are still nodes left in l2.
+        if(l2) p->next = l2;
+        
+        return fake_head->next;
+    }
+};
+
+==
+Python code:
+
+class Solution:
+    def mergeTwoLists(self, l1, l2):
+        if not l1: 
+            return l2
+        if not l2:
+            return l1
+
+        fake_head = ListNode(0)
+        fake_head.next = l1
+        p = fake_head
+
+        while l2 and p.next:
+            if l2.val <= p.next.val:
+                l2_next = l2.next
+                l2.next = p.next
+                p.next = l2
+                l2 = l2_next
+
+            p = p.next
+
+        if l2:
+            p.next = l2
+
+        return fake_head.next
+
+************************
+pr23. Merge k Sorted Lists, Hard
+
+Question:
+
+Merge k sorted linked lists and return it as one sorted list. Analyze and describe its complexity.
+
+Example:
+
+Input:
+[
+  1->4->5,
+  1->3->4,
+  2->6
+]
+Output: 1->1->2->3->4->4->5->6
+
+==
+Key: Recursion. Write a function:
+ListNode* helper(vector<ListNode*>& lists, int l, int r) 
+to merge the lists from lists[l] to lists[r].
+Inside function helper, it divides the lists from l to r into two halves, and recursively call helper on each half. Then merge the results by calling mergeTwoLists in "pr21. Merge Two Sorted Lists".
+
+It is also an important practice to evaluate the time complexity (from CodeGanker), which is O(nklogk), where k is the number of lists, n is the maximum length of each list. The way to derive this time complexity is using the Master Theorem: T(k) = 2T(k/2) + nk. So it is the second case of Master Theorem, so T(k) = O(f(k) logk), where f(k) = nk. So T(k) = O(nklogk).
+
+The space complexity is the size of the recursion stack, which is O(log k), the height of the binary tree.
+
+==
+C++ code:
+
+class Solution {
+private: 
+    ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
+        (Copy the code of "pr21. Merge Two Sorted Lists")
+    }
+    
+    ListNode* helper(vector<ListNode*>& lists, int l, int r) {
+        if(l == r) return lists[l];
+
+        int m = (l + r) / 2;
+        ListNode *head_l = helper(lists, l, m);
+        ListNode *head_r = helper(lists, m + 1, r);
+
+        return mergeTwoLists(head_l, head_r);
+    }   
+    
+public:
+    ListNode* mergeKLists(vector<ListNode*>& lists) {
+        int n = lists.size();
+        if(n == 0) return NULL;
+        
+        return helper(lists, 0, n - 1);
+    }
+};
+
+==
+Python code:
+
+class Solution:
+    def mergeTwoLists(self, l1, l2):
+        (Copy the code of "pr21. Merge Two Sorted Lists")
+    
+    def helper(self, lists, l, r):
+        if l == r:
+            return lists[l]
+        
+        m = int((l + r) / 2)
+        
+        head_l = self.helper(lists, l, m)
+        head_r = self.helper(lists, m + 1, r)
+        
+        return self.mergeTwoLists(head_l, head_r)
+        
+        
+    def mergeKLists(self, lists: List[ListNode]) -> ListNode:
+        n = len(lists)
+        if n == 0:
+            return None
+        return self.helper(lists, 0, n - 1)
+        
+
+************************
+pr148. Sort List, Medium
+
+Question:
+
+Sort a linked list in O(n log n) time using constant space complexity.
+
+Example 1:
+
+Input: 4->2->1->3
+Output: 1->2->3->4
+Example 2:
+
+Input: -1->5->3->4->0
+Output: -1->0->3->4->5
+
+==
+Key: Use merge sort. Use walker and runner to find the middle node of the list. The runner runs twice faster than walker. The middle node does not need to be precise. After found middle node, split the list into two halves, and call sortList on each half. Then merge the two lists by calling the code in problem 21. Merge Two Sorted Lists.
+
+==
+C++ code:
+
+class Solution {
+private:
+    ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
+        (Copy the code of problem 21. Merge Two Sorted Lists)
+    }
+
+public:
+    ListNode* sortList(ListNode* head) {
+        if(!head || !head->next) return head;
+        
+        //Find middle node:
+
+        ListNode* walker = head;
+        ListNode* runner = head;
+        
+        while(runner->next && runner->next->next) {
+            walker = walker->next;
+            runner = runner->next->next;
+        }
+
+        //Break up the list. Use walker as end of the first list.
+
+        ListNode* l1_head = head;
+        ListNode* l2_head = walker->next;
+        walker->next = NULL;
+
+        ListNode* l1_sorted_head = sortList(l1_head);
+        ListNode* l2_sorted_head = sortList(l2_head);
+
+        ListNode* mergedHead = mergeTwoLists(l1_sorted_head, l2_sorted_head);
+
+        return mergedHead;
+    }
+
+};
+
+==
+Python code:
+
+class Solution:
+    def mergeTwoLists(self, l1, l2):
+        (Copy the code of problem 21. Merge Two Sorted Lists)
+
+    def sortList(self, head):
+        if not head or not head.next:
+            return head
+
+        walker = head
+        runner = head
+
+        while runner.next and runner.next.next:
+            walker = walker.next
+            runner = runner.next.next
+            # 12345 
+
+        l1_head = head
+        l2_head = walker.next
+
+        walker.next = None
+
+        l1_sorted_head = self.sortList(l1_head)
+        l2_sorted_head = self.sortList(l2_head)
+
+        merged_head = self.mergeTwoLists(l1_sorted_head, l2_sorted_head)
+
+        return merged_head
+
+************************
+pr147. Insertion Sort List, Medium
+
+Question:
+
+Sort a linked list using insertion sort.
+
+Algorithm of Insertion Sort:
+
+Insertion sort iterates, consuming one input element each repetition, and growing a sorted output list.
+At each iteration, insertion sort removes one element from the input data, finds the location it belongs within the sorted list, and inserts it there.
+It repeats until no input elements remain.
+
+Example 1:
+
+Input: 4->2->1->3
+Output: 1->2->3->4
+Example 2:
+
+Input: -1->5->3->4->0
+Output: -1->0->3->4->5
+
+==
+Key: Create a fakeHead as a the head of a separate List, which initially has only one node (fakeHead). Use a pointer pre to intially point to fakeHead. Use another pointer cur (initialized to head). cur traverses the head List. If cur is smaller than pre->next, then move cur the the left of pre->next, then let pre scan from fakeHead to the right again, until another cur is smaller than pre.
+
+==
+C++ Code:
+
+class Solution {
+public:
+    ListNode* insertionSortList(ListNode* head) {
+        if(!head || !head->next) return head;
+
+        ListNode* fake_head = new ListNode(0);
+        ListNode* pre = fake_head;
+        ListNode* cur = head;
+
+        while(cur) {
+            if(!pre->next || (cur->val <= pre->next->val)) {
+                ListNode* cur_next = cur->next;
+                cur->next = pre->next;
+                pre->next = cur;
+                cur = cur_next;
+                pre = fake_head;
+            } else {
+                pre = pre->next;
+            }
+        }
+
+        return fake_head->next;
+    }
+};
+
+==
+Python code:
+
+class Solution:
+    def insertionSortList(self, head):
+    	if not head or not head.next:
+    		return head
+
+    	fake_head = ListNode(0)	
+    	pre = fake_head
+    	cur = head
+
+    	while cur:
+    		if not pre.next or cur.val <= pre.next.val:
+    			cur_next = cur.next
+    			cur.next = pre.next
+    			pre.next = cur
+    			cur = cur_next
+    			pre = fake_head
+    		else:
+    			pre = pre.next	
+
+    	return fake_head.next
+
+************************
+pr206. Reverse Linked List, Easy 
+
+Question:
+
+Reverse a singly linked list.
+
+Example:
+
+Input: 1->2->3->4->5->NULL
+Output: 5->4->3->2->1->NULL
+Follow up:
+
+A linked list can be reversed either iteratively or recursively. Could you implement both?
+
+==
+Key:
+
+Iterative: Create a single node called pre. Each time move a node from the list to the right of pre.
+
+Recursive: Call reverseList(head -> next) to reverse all the nodes after head, and then add head to it appropriately.
+
+==
+C++ Code (iterative):
+
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head) {
+        if(!head || !head->next) return head;
+
+        ListNode* pre = new ListNode(0);
+        ListNode* cur = head;
+
+        while(cur) {
+            ListNode* curNext = cur->next;
+            cur->next = pre->next;
+            pre->next = cur;
+            cur = curNext;
+        }        
+
+        return pre->next;
+    }
+};
+
+==
+Python code (iterative):
+
+class Solution:
+    def reverseList(self, head):
+    	if not head or not head.next:
+    		return head
+
+    	pre = ListNode(0)
+    	cur = head
+
+    	while cur:
+    		cur_next = cur.next
+    		cur.next = pre.next
+    		pre.next = cur
+    		cur = cur_next
+
+    	return pre.next	
+
+==
+C++ code (recursive):
+
+//Originally from leetcode solution, modified by Tao:
+
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head) {
+        if(!head || !head->next) return head;
+        
+        ListNode* new_head = reverseList(head->next);
+        head->next->next = head;
+        head->next = NULL;
+        
+        return new_head;
+    }
+};
+
+==
+Python code (recursive):
+
+class Solution:
+    def reverseList(self, head):
+    	if not head or not head.next:
+    		return head
+
+    	new_head = self.reverseList(head.next)
+    	head.next.next = head
+    	head.next = None
+
+    	return new_head
+
+************************
+pr92. Reverse Linked List II, Medium 
+
+Question:
+
+Reverse a linked list from position m to n. Do it in one-pass.
+
+Note: 1 ≤ m ≤ n ≤ length of list.
+
+Example:
+
+Input: 1->2->3->4->5->NULL, m = 2, n = 4
+Output: 1->4->3->2->5->NULL
+
+==
+Key: Use a pointer pre to point to the node on the left of node m. Use another pointer cur which is intialized to be the node on the right of node m. Each time move cur to the right of pre, then cur = cur->next. Need a fakeHead.
+
+==
+Code:
+
+class Solution {
+public:
+    ListNode* reverseBetween(ListNode* head, int m, int n) {
+        if(!head || !head->next || n == 1) return head; 
+        
+        ListNode* fakeHead = new ListNode(0);
+        fakeHead->next = head;
+        ListNode* pre = fakeHead;
+        
+        for(int i = 1; i <= m - 1; ++i) pre = pre->next;
+        
+        ListNode* nodeM = pre->next;
+        ListNode* cur = nodeM->next;
+
+        for(int i = 1; i <= n - m; ++i) {
+            ListNode* curNext = cur->next;
+            cur->next = pre->next;
+            pre->next = cur;
+            cur = curNext;
+        }
+
+        nodeM->next = cur;
+
+        return fakeHead->next;
+    }
+};
+
+************************
+pr25. Reverse Nodes in k-Group, Hard
+
+Question:
+
+Given a linked list, reverse the nodes of a linked list k at a time and return its modified list.
+
+k is a positive integer and is less than or equal to the length of the linked list. If the number of nodes is not a multiple of k then left-out nodes in the end should remain as it is.
+
+Example:
+
+Given this linked list: 1->2->3->4->5
+
+For k = 2, you should return: 2->1->4->3->5
+
+For k = 3, you should return: 3->2->1->4->5
+
+Note:
+
+Only constant extra memory is allowed.
+You may not alter the values in the list's nodes, only nodes itself may be changed.
+
+Tao: Even in the question it says k <= length of list, in the test cases there are still some k > length of list, in this case, just do nothing and return the original list.
+
+==
+Key: First find the total length of the list, then divide the list into groups of length k. Then for each group, call the funcion reverseBetween in "pr 92. Reverse Linked List II". Note that reversing the first group changes the head.
+
+==
+C++ code:
+
+class Solution {
+private:
+    ListNode* reverseBetween(ListNode* head, int m, int n) {
+        (Copy the code of "pr 92. Reverse Linked List II")
+    }
+
+public:
+    ListNode* reverseKGroup(ListNode* head, int k) {
+    	if(!head || !head->next) return head; 
+
+    	// Find length:
+    	int len = 0;
+
+    	ListNode* p = head;
+
+    	while(p) {
+    		p = p->next;
+    		++len;
+    	}
+        
+        if(k > len) return head;
+
+    	// Divide into groups:
+
+    	int n_groups = len / k;
+
+    	ListNode* new_head = reverseBetween(head, 1, k); //Reversing the first group changes the head.
+
+    	for(int i = 1; i < n_groups; ++i) {
+    		reverseBetween(new_head, i * k + 1, i * k + k);
+    	}
+
+        return new_head;
+    }
+};
+
+************************
+pr234. Palindrome Linked List, Easy 
+
+Question:
+
+Given a singly linked list, determine if it is a palindrome.
+
+Example 1:
+
+Input: 1->2
+Output: false
+Example 2:
+
+Input: 1->2->2->1
+Output: true
+Follow up:
+Could you do it in O(n) time and O(1) space?
+
+==
+Key: First find the middle of the list, break the list into two. Reverse the second list, and compare it with the first list. To reverse list, can call the function of "pr 206. Reverse Linked List". 
+
+==
+C++ code:
+
+class Solution {
+private:
+	ListNode* reverseList(ListNode* head) {
+        (Copy the code of pr 206 here).
+    }
+
+public:
+    bool isPalindrome(ListNode* head) {
+    	if(!head || !head->next) return true;
+
+    	//Find middle:
+
+    	ListNode* walker = head;
+    	ListNode* runner = head;
+
+    	while(runner->next && runner->next->next) {
+    		walker = walker->next;
+    		runner = runner->next->next;
+    	}
+
+    	//Break the list:
+
+    	ListNode* p1 = head; //p1 is the head of list 1
+    	ListNode* p2 = reverseList(walker->next); //p2 is the head of list 2
+
+    	//Compare:
+    	while(p2) {
+    		if(p1->val != p2->val) return false;
+    		p1 = p1->next;
+    		p2 = p2->next;
+    	}
+
+        return true;
+    }
+};
+
+************************
+pr143. Reorder List, Medium
+
+Question:
+
+Given a singly linked list L: L0 → L1 → … → Ln-1 → Ln,
+reorder it to: L0 → Ln → L1 → Ln-1 → L2 → Ln-2 → …
+
+You may not modify the values in the list's nodes, only nodes itself may be changed.
+
+Example 1:
+Given 1->2->3->4, reorder it to 1->4->2->3.
+
+Example 2:
+Given 1->2->3->4->5, reorder it to 1->5->2->4->3.
+
+==
+Key: First find the middle of the list, then reverse the second list, finally merge these two lists. To reverse list, can call the function of "pr 206. Reverse Linked List". 
+
+
+==
+C++ code:
+
+class Solution {
+private:
+	// Copied from pr 206. Reverse Linked List
+    ListNode* reverseList(ListNode* head) {
+        ...
+    }
+
+public:
+    void reorderList(ListNode* head) {
+    	if(!head || !head->next) return;
+
+    	// Find the middle point
+
+    	ListNode* walker = head;
+    	ListNode* runner = head;
+
+    	while(runner && runner->next && runner->next->next) {
+    		walker = walker->next;
+    		runner = runner->next->next;
+    	}
+
+    	// Split at the middle point
+
+    	ListNode* head_new = walker->next;
+    	walker->next = NULL;
+                
+    	// Reverse the second list
+
+        ListNode* head2 = reverseList(head_new);
+        
+        // Merge two lists
+
+        ListNode* p1 = head;
+        ListNode* p2 = head2;
+        ListNode* p1_next = p1->next;
+        ListNode* p2_next = p2->next;
+
+        while(p1 && p2) {
+        	p1->next = p2;
+        	p2->next = p1_next;
+        	p1 = p1_next;
+        	p2 = p2_next;
+            
+            if(p1) p1_next = p1->next;            
+            if(p2) p2_next = p2->next;
+        }
+    }
+};
+
+==
+Python code:
+
+class Solution:
+	# Copied from pr 206. Reverse Linked List
+    def reverseList(self, head):
+		...
+    
+    def reorderList(self, head: ListNode) -> None:
+    	if not head or not head.next: 
+    		return
+
+    	# Find the middle point
+
+    	walker = head
+    	runner = head
+
+    	while runner and runner.next and runner.next.next:
+    		walker = walker.next
+    		runner = runner.next.next
+
+    	# Split at the middle point
+
+    	head_new = walker.next
+    	walker.next = None
+
+    	# Reverse the second list
+
+    	head2 = self.reverseList(head_new) 
+
+    	# Merge two lists
+
+    	p1 = head
+    	p2 = head2
+    	p1_next = p1.next
+    	p2_next = p2.next
+
+    	while p1 and p2:
+    		p1.next = p2
+    		p2.next = p1_next 
+    		p1 = p1_next
+    		p2 = p2_next
+
+    		if p1: 
+    			p1_next = p1.next
+    		if p2:
+    			p2_next = p2.next
+        
+************************
+pr61. Rotate List, Medium. 
+
+Question:
+
+Given a linked list, rotate the list to the right by k places, where k is non-negative.
+
+Example 1:
+Input: 1->2->3->4->5->NULL, k = 2
+Output: 4->5->1->2->3->NULL
+
+Explanation:
+rotate 1 steps to the right: 5->1->2->3->4->NULL
+rotate 2 steps to the right: 4->5->1->2->3->NULL
+
+Example 2:
+Input: 0->1->2->NULL, k = 4
+Output: 2->0->1->NULL
+
+Explanation:
+rotate 1 steps to the right: 2->0->1->NULL
+rotate 2 steps to the right: 1->2->0->NULL
+rotate 3 steps to the right: 0->1->2->NULL
+rotate 4 steps to the right: 2->0->1->NULL
+
+==
+Key: First find the position to cut, then cut at that position. Remember to take mod when k is bigger than the length of list.
+
+==
+C++ code:
+
+class Solution {
+public:
+    ListNode* rotateRight(ListNode* head, int k) {
+    	if(!head || !head->next || k <= 0) return head; 
+
+    	//Find length of list
+
+    	int length = 1;
+    	ListNode* tail = head;
+
+    	while(tail->next) {
+    		tail = tail->next;
+    		++length;
+    	}
+
+    	k = k % length;
+    	if(k == 0) return head;
+        
+    	//Find the position to cut
+    	
+    	int i = 1;
+    	ListNode* node_cut = head;
+
+    	while(i < length - k) {
+    		node_cut = node_cut->next;
+    		++i;
+    	}   
+
+    	ListNode* new_head = node_cut->next;
+    	node_cut->next = NULL;
+    	tail->next = head;
+    
+    	return new_head;        
+    }
+};
+
+==
+Python code:
+
+class Solution:
+    def rotateRight(self, head: ListNode, k: int) -> ListNode:
+    	if not head or not head.next or k <= 0: 
+    		return head;
+
+    	# Find length of list
+
+    	length = 1
+    	tail = head
+
+    	while tail.next != None:
+    		tail = tail.next
+    		length += 1
+
+    	k = k % length
+
+    	if k == 0:
+    		return head
+
+    	# Find the position to cut
+
+    	i = 1
+    	node_cut = head
+
+    	while i < length - k:
+    		node_cut = node_cut.next
+    		i += 1
+
+    	new_head = node_cut.next
+    	node_cut.next = None
+    	tail.next = head
+
+    	return new_head
+        
+
+************************
+pr141. Linked List Cycle, Medium
+
+Question:
+
+Given a linked list, determine if it has a cycle in it.
+
+To represent a cycle in the given linked list, we use an integer pos which represents the position (0-indexed) in the linked list where tail connects to. If pos is -1, then there is no cycle in the linked list.
+
+Tao: in the code, the input is only the head of the list, it will not tell you the value of pos. The above representation is only used by LeetCode OJ internal to represent cycles, it is not related to the code.
+
+Example 1:
+
+Input: head = [3,2,0,-4], pos = 1
+Output: true
+
+Explanation: There is a cycle in the linked list, where tail connects to the second node.
+
+3 --> 2 --> 0 --> -4 --
+      |               |
+       ---------------
+
+Example 2:
+
+Input: head = [1,2], pos = 0
+Output: true
+
+Explanation: There is a cycle in the linked list, where tail connects to the first node.
+
+1 --> 2 --
+|         |
+ ---------
+
+Example 3:
+
+Input: head = [1], pos = -1
+Output: false
+
+Explanation: There is no cycle in the linked list.
+
+1
+ 
+Follow up:
+
+Can you solve it using O(1) (i.e. constant) memory? <- Tao: therefore, can not use set.
+
+==
+Key: Use walker and runner pointers. Runner moves at twice the speed of walker. Both of them starts from head. If they can meet, then there is cycle, otherwise no cycle.
+
+Tao's proof: If there is no cycle, obviously the walker will never be able to catch up with the runner. If there is cycle, both the walker and runner will eventually enter the cycle. Once they are in the cycle, they will always be in the cycle. Now consider two people moving in the same cycle but with different speeds, the faster one will definately catch the slower one (think of the cycle as an infinately long straight line, the fater person will eventually catch the slower person).
+
+==
+C++ code:
+
+class Solution {
+public:
+    bool hasCycle(ListNode *head) {
+    	if(!head || !head->next) return false;
+    	
+    	ListNode *walker = head, *runner = head;
+
+    	while(runner && runner->next) {
+    		walker = walker->next;
+    		runner = runner->next->next;
+            if(walker == runner) return true;
+    	}
+
+    	return false;
+    }
+};
+
+==
+Python code:
+
+# Coded in Python2, no Python3 available for this problem
+class Solution(object):
+    def hasCycle(self, head):
+    	if not head or not head.next:
+    		return False
+
+    	walker = head
+    	runner = head
+
+    	while runner and runner.next:
+    		walker = walker.next
+    		runner = runner.next.next
+    		if walker == runner:
+    			return True
+
+    	return False
+
+************************
+pr142. Linked List Cycle II, Medium
+
+Question:
+
+Given a linked list, return the node where the cycle begins. If there is no cycle, return null.
+
+To represent a cycle in the given linked list, we use an integer pos which represents the position (0-indexed) in the linked list where tail connects to. If pos is -1, then there is no cycle in the linked list.
+
+Note: Do not modify the linked list.
+
+Example 1:
+
+Input: head = [3,2,0,-4], pos = 1
+Output: tail connects to node index 1
+
+Explanation: There is a cycle in the linked list, where tail connects to the second node.
+
+3 --> 2 --> 0 --> -4 --
+      |               |
+       ---------------
+
+Example 2:
+
+Input: head = [1,2], pos = 0
+Output: tail connects to node index 0
+
+Explanation: There is a cycle in the linked list, where tail connects to the first node.
+
+1 --> 2 --
+|         |
+ ---------
+
+
+Example 3:
+
+Input: head = [1], pos = -1
+Output: no cycle
+
+Explanation: There is no cycle in the linked list.
+
+1
+
+Follow up: Can you solve it without using extra space?
+
+==
+Key: First use the walker and runner method, runner moves at twice the speed of walker. When they meet (call it point A), move walker back to the head of the list, the runner stays at point A. Now walker and runner both walk at the SAME speed, when they meet again, it is where the cycle begins
+
+Tao's proof: when walker and runner first meet at point A, runner must have moved twice the distance as walker as shown below (because runner has twice the speed as walker, and they moved within the same length of time). The "----" means the region outside the cycle. The "====" means inside the cycle. "****" means n complete cycles (only in this way runner can meet walker). Because the distance moved by runner is twice of walker, so the length of "****" equals the length of walker distance "-----===". Now if the walker starts again at head, let's suppose he moves the distance of "-------". The distance of "-------" compared to "*****", the difference is "====", which means that "------" equals n complete cycles minus "====". So if runner starts at the end of "****" (which is equivalent as the begining of "***") and moves distance of "----", it would move a distance of n cycles minus "====", which essentially where the cycle begins (the point where "----" and "====" meets).
+
+Walker: -------------======
+Runner: -------------======********************
+
+==
+C++ code:
+
+class Solution {
+public:
+    ListNode *detectCycle(ListNode *head) {
+    	if(!head || !head->next) return NULL;
+
+    	ListNode *walker = head, *runner = head;
+
+    	while(runner && runner->next) {
+    		walker = walker->next;
+    		runner = runner->next->next;
+            if(walker == runner) break;
+    	}
+
+    	if(!runner || !runner->next) return NULL;
+
+    	walker = head;
+
+    	while(walker != runner) {
+    		walker = walker->next;
+    		runner = runner->next;
+    	}
+
+    	return walker;    
+    }
+};
+
+==
+Python code:
+
+# No Python3 available in OJ. So the following is Python2:
+class Solution(object):
+    def detectCycle(self, head):
+    	if not head or not head.next:
+    		return None
+
+    	walker = head
+    	runner = head
+
+    	while runner and runner.next:
+    		walker = walker.next
+    		runner = runner.next.next
+    		if walker == runner:
+    			break
+
+    	if not runner or not runner.next:
+    		return None
+
+    	walker = head
+
+    	while walker != runner:
+    		walker = walker.next
+    		runner = runner.next
+
+    	return walker
+    	
+************************
+pr138. Copy List with Random Pointer, Hard.
+
+Question:
+
+A linked list is given such that each node contains an additional random pointer which could point to any node in the list or null.
+
+Return a deep copy of the list.
+
+Example 1:
+
+----------     ---------------
+|   1     |    |      2      |
+|  next  -------->   next  ---------> NULL  
+| random -------->  random -------|
+|---------|    |-------------|    |
+                       |          |
+                       |-----------
+
+Input (tao: confusing, do not read):
+{"$id":"1","next":{"$id":"2","next":null,"random":{"$ref":"2"},"val":2},"random":{"$ref":"2"},"val":1}
+
+Explanation (tao: read this):
+Node 1's value is 1, both of its next and random pointer points to Node 2.
+Node 2's value is 2, its next pointer points to null and its random pointer points to itself.
+ 
+Note:
+
+You must return the copy of the given head as a reference to the cloned list.
+
+==
+Key: For the original list, for each node N, make a copy of it (N'). Insert N' into the original list by putting N' right after N. N'->random should be set to N->random->next. Then split the copied list from the original list.
+
+==
+C++ code:
+
+class Solution {
+public:
+    Node* copyRandomList(Node* head) {
+        if(!head) return NULL;
+
+        Node *p = head;
+
+        //Insert copy nodes
+        
+        while(p) {
+            Node *p_copy = new Node(p->val, NULL, NULL);
+            Node *p_next = p->next;
+            p->next = p_copy;
+            p_copy->next = p_next;
+            p = p_next;
+        }
+
+        Node *q = head;
+
+        while(q && q->next) {
+            q->next->random = (q->random ? q->random->next : NULL);
+            q = q->next->next;
+        }
+
+        //Break the list
+
+        Node *head_copy = head->next;
+        Node *r = head, *r_copy = head_copy;
+
+        while(r_copy->next) {
+            r->next = r_copy->next;
+            r_copy->next = r->next->next;
+
+            r = r->next;
+            r_copy = r_copy->next;
+        }
+
+        r->next = NULL;
+        r_copy->next = NULL;
+
+        return head_copy;
+    }
+};
+
+
+==
+Python code:
+
+class Solution:
+    def copyRandomList(self, head: 'Node') -> 'Node':
+    	if not head:
+    		return None
+
+    	p = head;
+
+    	while p:
+    		p_copy = Node(p.val, None, None)
+    		p_next = p.next
+    		p.next = p_copy
+    		p_copy.next = p_next
+    		p = p_next
+
+    	q = head
+
+    	while q and q.next:
+    		if q.random:
+    			q.next.random = q.random.next
+    		else:
+    			q.next.random = None
+    		q = q.next.next
+
+    	head_copy = head.next
+    	r = head
+    	r_copy = head_copy
+
+    	while r_copy.next:
+    		r.next = r_copy.next
+    		r_copy.next = r.next.next
+
+    		r = r.next
+    		r_copy = r_copy.next
+
+    	r.next = None
+    	r_copy.next = None
+
+    	return head_copy
+
+************************
+pr83. Remove Duplicates from Sorted List, Easy 
+
+Question:
+
+Given a sorted linked list, delete all duplicates such that each element appear only once.
+
+Example 1:
+
+Input: 1->1->2
+Output: 1->2
+Example 2:
+
+Input: 1->1->2->3->3
+Output: 1->2->3
+
+==
+Key: Two pointers. Use pointer pre to denote the left node. Use pointer cur to intially be the next of pre. cur keeps jumping to the right, until its value is different from pre. Then remove all the nodes between pre and cur.
+
+==
+C++ code:
+
+class Solution {
+public:
+    ListNode* deleteDuplicates(ListNode* head) {
+        if(!head || !head->next) return head;
+
+        ListNode *pre = head, *cur = pre->next;
+
+        while(cur) {
+        	while(cur && pre->val == cur->val) cur = cur->next;
+        	pre->next = cur;
+        	pre = cur;
+        	if(cur) cur = cur->next;
+        }
+
+        return head;
+    }
+};
+
+==
+Python code:
+
+class Solution:
+    def deleteDuplicates(self, head: ListNode) -> ListNode:
+        if not head or not head.next:
+            return head
+        pre = head
+        cur = pre.next
+        
+        while cur:
+            while cur and pre.val == cur.val:
+                cur = cur.next
+            pre.next = cur
+            pre = cur
+            if cur:
+                cur = cur.next
+            
+        return head
+
+************************
+pr82. Remove Duplicates from Sorted List II, Medium 
+
+Question:
+
+Given a sorted linked list, delete all nodes that have duplicate numbers, leaving only distinct numbers from the original list.
+
+Example 1:
+
+Input: 1->2->3->3->4->4->5
+Output: 1->2->5
+
+Example 2:
+
+Input: 1->1->1->2->3
+Output: 2->3
+
+==
+Key: 
+
+==
+C++ code:
+
+class Solution {
+public:
+    ListNode* deleteDuplicates(ListNode* head) {
+        if(!head || !head->next) return head;
+        ListNode *fake_head = new ListNode(0);
+        fake_head->next = head;
+        ListNode *pre = fake_head, *cur = fake_head->next;
+        
+        while(cur && cur->next) {
+            if(cur->val != cur->next->val) {
+                pre = cur;    
+            } else {
+                while(cur && cur->next && cur->val == cur->next->val) cur = cur->next;
+                pre->next = cur->next;
+            }
+            
+            cur = cur->next;
+        }
+        
+        return fake_head->next;
+    }
+};
+
+==
+Python code:
+
+class Solution:
+    def deleteDuplicates(self, head: ListNode) -> ListNode:
+        if not head or not head.next:
+            return head
+        
+        fake_head = ListNode(0)
+        fake_head.next = head
+        pre = fake_head
+        cur = fake_head.next
+    
+        while cur and cur.next:
+            if cur.val != cur.next.val:
+                pre = cur
+            else:
+                while cur and cur.next and cur.val == cur.next.val:
+                    cur = cur.next
+                pre.next = cur.next
+                
+            cur = cur.next
+            
+        return fake_head.next
+
+************************
+pr86. Partition List, Medium
+
+Question:
+
+Given a linked list and a value x, partition it such that all nodes less than x come before nodes greater than or equal to x.
+
+You should preserve the original relative order of the nodes in each of the two partitions.
+
+Example:
+
+Input: head = 1->4->3->2->5->2, x = 3
+Output: 1->2->2->4->3->5
+
+
+==
+Key: Create two new lists. The first list has nodes smaller than x, the second list has nodes greater or equal to x. Do one pass of the input list, if sees a node smaller than x, move it to the end of first list, otherwise to the end of second list. Finally concatenate these two lists. This is also the solution in LeetCode Discussoin.
+
+==
+C++ code:
+
+class Solution {
+public:
+    ListNode* partition(ListNode* head, int x) {
+        if(!head || !head->next) return head;
+        ListNode *fake_head_smaller = new ListNode(0);
+        ListNode *fake_head_larger = new ListNode(0);
+        
+        ListNode *tail_smaller = fake_head_smaller;
+        ListNode *tail_larger = fake_head_larger;
+        
+        ListNode *cur = head;
+        
+        while(cur) {
+            ListNode *cur_next = cur->next;
+            
+            if(cur->val < x) {
+                tail_smaller->next = cur;
+                tail_smaller = cur;
+            } else {
+                tail_larger->next = cur;
+                tail_larger = cur;
+            }
+            
+            cur->next = NULL;
+            cur = cur_next;
+        }
+        
+        tail_smaller->next = fake_head_larger->next;
+        
+        return fake_head_smaller->next;
+    }
+};
+
+==
+Python code:
+
+class Solution:
+    def partition(self, head: ListNode, x: int) -> ListNode:
+        if not head or not head.next:
+            return head
+        
+        fake_head_smaller, fake_head_larger = ListNode(0), ListNode(0)
+        tail_smaller, tail_larger = fake_head_smaller, fake_head_larger
+
+        cur = head
+        
+        while cur:
+            cur_next = cur.next
+            
+            if cur.val < x:
+                tail_smaller.next = cur
+                tail_smaller = cur
+            else:
+                tail_larger.next = cur
+                tail_larger = cur
+            
+            cur.next = None
+            cur = cur_next
+            
+        tail_smaller.next = fake_head_larger.next
+            
+        return fake_head_smaller.next
+        
+************************
+pr24. Swap Nodes in Pairs, Medium 
+
+Question:
+
+Given a linked list, swap every two adjacent nodes and return its head.
+
+You may not modify the values in the list's nodes, only nodes itself may be changed.
+
+Example:
+
+Given 1->2->3->4, you should return the list as 2->1->4->3.
+
+==
+Key: Write a function swap(l, r) to swap the two nodes between l and r. Then l and r pass through the list and calls swap along. 
+
+==
+C++ code:
+
+class Solution {
+private:
+    // Reverts the two nodes between l and r
+    // Checked the syntax of void function online
+    void swap(ListNode *l, ListNode *r) {
+        ListNode *n1 = l->next, *n2 = l->next->next;
+        l->next = n2;
+        n2->next = n1;
+        n1->next = r;
+    }   
+    
+public:
+    ListNode* swapPairs(ListNode* head) {
+        if(!head || !head->next) return head;
+        
+        ListNode *fake_head = new ListNode(0);
+        fake_head->next = head;
+        
+        ListNode *l = fake_head, *r = head->next->next;
+        
+        while(true) {
+            swap(l, r);
+            if(!r || !r->next) break;
+            l = l->next->next;
+            r = r->next->next;
+        }
+        
+        return fake_head->next;
+    }
+};
+
+==
+Python code:
+
+class Solution:
+    def swap(self, l, r):
+        n1 = l.next
+        n2 = l.next.next
+        l.next = n2
+        n2.next = n1
+        n1.next = r
+        
+    def swapPairs(self, head: ListNode) -> ListNode:
+        if not head or not head.next:
+            return head
+        
+        fake_head = ListNode(0)
+        fake_head.next = head
+        l = fake_head
+        r = head.next.next
+        
+        while True:
+            self.swap(l, r)
+            if not r or not r.next:
+                break
+            l = l.next.next
+            r = r.next.next
+            
+        return fake_head.next
+
+************************
+pr19. Remove Nth Node From End of List, Easy 
+
+Question:
+
+Given a linked list, remove the n-th node from the end of list and return its head.
+
+Example:
+
+Given linked list: 1->2->3->4->5, and n = 2.
+
+After removing the second node from the end, the linked list becomes 1->2->3->5.
+Note:
+
+Given n will always be valid.
+
+Follow up:
+
+Could you do this in one pass?
+
+==
+Key: The key is how to find the node location and delete it in one pass. Use two pointers l and r. r first moves n steps to the right. The l and r both move together until r reaches the end. Then can delete the next node of l.
+
+==
+C++ code:
+
+class Solution {
+public:
+    ListNode* removeNthFromEnd(ListNode* head, int n) {
+        if(!head || n <= 0) return head;
+        
+        ListNode *fake_head = new ListNode(0);
+        fake_head->next = head;
+        ListNode *l = fake_head, *r = fake_head;
+        
+        for(int i = 0; i < n; ++i) r = r->next;
+        
+        while(r && r->next) {
+            r = r->next;
+            l = l->next;
+        }
+        
+        // Remove the next node of l
+        l->next = l->next->next;
+        
+        return fake_head->next;
+    }
+};
+
+==
+Python code:
+
+class Solution:
+    def removeNthFromEnd(self, head: ListNode, n: int) -> ListNode:
+        if not head or n <= 0:
+            return head
+        
+        fake_head = ListNode(0)
+        fake_head.next = head
+        l = fake_head
+        r = fake_head
+        
+        for i in range(0, n):
+            r = r.next
+            
+        while r and r.next:
+            r = r.next
+            l = l.next
+            
+        l.next = l.next.next
+        
+        return fake_head.next
+
+************************
+pr160. Intersection of Two Linked Lists, Easy 
+
+Question:
+
+Write a program to find the node at which the intersection of two singly linked lists begins.
+
+Examples:
+Omitted by Tao because the examples contain many pictures and are useless.
+ 
+Notes:
+
+- If the two linked lists have no intersection at all, return null.
+- The linked lists must retain their original structure after the function returns.
+- You may assume there are no cycles anywhere in the entire linked structure.
+- Your code should preferably run in O(n) time and use only O(1) memory.
+
+==
+Key: First calculate the lengths of two lists. Then calculate the diff of lengths. The pointer at the head of the long list first moves diff steps. Then the pointers in both lists move together until they meet.
+
+==
+C++ code:
+
+class Solution {
+public:
+    ListNode *getIntersectionNode(ListNode *headA, ListNode *headB) {
+        if(!headA || !headB) return NULL;
+        
+        int length_a = 0, length_b = 0;
+        ListNode *a = headA, *b = headB;
+        
+        while(a) {
+            a = a->next;
+            ++length_a;
+        }
+        
+        while(b) {
+            b = b->next;
+            ++length_b;
+        }
+        
+        int diff = length_a - length_b;
+        
+        a = diff > 0 ? headA : headB; // a points to the head of the longer list
+        b = diff > 0 ? headB : headA; // b points to the head of the shorter list
+        
+        for(int i = 0; i < abs(diff); ++i) a = a->next;
+        
+        while(a != b) {
+            if(!a || !b) return NULL;
+            a = a->next;
+            b = b->next;
+        }
+        
+        return a;
+    }
+};
+
+==
+Python code:
+
+class Solution(object):
+    def getIntersectionNode(self, headA, headB):
+        if not headA or not headB:
+            return None
+        
+        length_a = 0
+        length_b = 0
+        a = headA
+        b = headB
+        
+        while a:
+            a = a.next
+            length_a += 1
+            
+        while b:
+            b = b.next
+            length_b += 1
+            
+        diff = length_a - length_b
+        
+        if diff > 0:
+            a = headA
+            b = headB
+        else:
+            a = headB
+            b = headA
+        
+        for i in range(0, abs(diff)):
+            a = a.next
+        
+        while a != b:
+            if not a or not b:
+                return None
+            a = a.next
+            b = b.next
+        
+        return a
+
+************************
+pr203. Remove Linked List Elements, Easy
+
+Question:
+
+Remove all elements from a linked list of integers that have value val.
+
+Example:
+
+Input:  1->2->6->3->4->5->6, val = 6
+Output: 1->2->3->4->5
+
+==
+Key: Use a pointer cur. If cur->next equals val, then delete cur->next. Need to use a fake_head. Note the case when the nodes with val values are next to each other.
+
+==
+C++ code:
+
+class Solution {
+public:
+    ListNode* removeElements(ListNode* head, int val) {
+        if(!head) return head;
+        
+        ListNode* fake_head = new ListNode(0);
+        fake_head->next = head;
+        
+        ListNode* cur = fake_head;
+        
+        while(cur && cur->next) {
+            if(cur->next->val == val) cur->next = cur->next->next;
+            else cur = cur->next;
+        }
+        
+        
+        return fake_head->next;
+    }
+};
+
+==
+Python code:
+
+class Solution:
+    def removeElements(self, head: ListNode, val: int) -> ListNode:
+        if not head:
+            return head
+        
+        fake_head = ListNode(0)
+        fake_head.next = head
+        
+        cur = fake_head
+        
+        while cur and cur.next:
+            if cur.next.val == val:
+                cur.next = cur.next.next
+            else:
+                cur = cur.next
+        
+        return fake_head.next
+ 
+************************
+pr237. Delete Node in a Linked List, Easy 
+
+Question:
+
+Write a function to delete a node (except the tail) in a singly linked list, given only access to that node.
+
+Given linked list -- head = [4,5,1,9], which looks like following:
+
+(tao: there is a picture, which is useless so omitted)
+
+Example 1:
+
+Input: head = [4,5,1,9], node = 5
+Output: [4,1,9]
+Explanation: You are given the second node with value 5, the linked list should become 4 -> 1 -> 9 after calling your function.
+
+Example 2:
+
+Input: head = [4,5,1,9], node = 1
+Output: [4,5,9]
+Explanation: You are given the third node with value 1, the linked list should become 4 -> 5 -> 9 after calling your function.
+ 
+Note:
+
+- The linked list will have at least two elements.
+- All of the nodes' values will be unique.
+- The given node will not be the tail and it will always be a valid node of the linked list.
+- Do not return anything from your function.
+
+Tao Note:
+
+This problem does not mean to really delete the given node (remove the block of given memory location from the list). The values of nodes can be changed to achieve this deletion purpose.
+
+==
+Key: As I said in the Tao Note, we have to do this by changing the value of nodes (people online also did the same). We can assign the value of node->next to node, and delete node->next. The code has only two lines, which should be the shortest solution in all LeetCode problems.
+
+==
+C++ code:
+
+class Solution {
+public:
+    void deleteNode(ListNode* node) {
+        node->val = node->next->val;
+        node->next = node->next->next;
+    }
+};
+
+==
+Python code:
+
+class Solution:
+    def deleteNode(self, node):
+        node.val = node.next.val
+        node.next = node.next.next
+
+
+
+=================================================
+cattree
+
+************************
+pr94. Binary Tree Inorder Traversal, Medium 
+
+Question:
+
+Given a binary tree, return the inorder traversal of its nodes' values.
+
+Example:
+
+Input: [1,null,2,3]
+   1
+    \
+     2
+    /
+   3
+
+Output: [1,3,2]
+Follow up: Recursive solution is trivial, could you do it iteratively?
+
+==
+Key:
+
+Recursive (same for all in-order, pre-order, post-order): write a function "void helper(TreeNode* cur, vector<int>& res)", whose functionality is to in-order (or pre-order, or post-order) traversal the subtree of cur, and put the result in res. Call helper recursively on cur->left and cur->right. Put the node's value in result vector at proper time.
+
+Iterative (same for both in-order and pre-order): put all nodes on the left edge of the tree into a stack. Each time get a node from the stack, if "the right child of this node" (call it right_haha) exisits, then put the all the nodes on the left edge of right_haha subtree into this stack. Put the node's value in result vector at proper time. 
+
+==
+C++ code (recursive):
+
+//This code was originally from leetcode discussion, and modified by Tao.
+
+class Solution {
+private:
+    void helper(TreeNode* cur, vector<int>& res) {        
+        if(cur->left) helper(cur->left, res);
+        res.push_back(cur->val);
+        if(cur->right) helper(cur->right, res);
+    }
+    
+public:
+    vector<int> inorderTraversal(TreeNode* root) {
+        vector<int> res;
+        if(!root) return res;
+        helper(root, res);
+        return res;
+    }
+};
+
+==
+C++ code (iterative):
+
+//The code in Leetcode solution is simpler, but here I still use tao's code because it is easier to understand and remember.
+
+class Solution {
+public:
+	vector<int> inorderTraversal(TreeNode* root) {
+    	vector<int> res;
+    	if(!root) return res;
+
+        stack<TreeNode*> stack;
+        TreeNode* cur = root;
+
+        while(cur) {
+            stack.push(cur);
+            cur = cur->left;
+        }
+
+        while(!stack.empty()) {
+            TreeNode* top = stack.top();
+            stack.pop();
+
+            res.push_back(top->val);
+
+            if(top->right) {
+                TreeNode* n = top->right;
+                while(n) {
+                    stack.push(n);
+                    n = n->left;
+                }
+            }
+        }
+
+    	return res;
+	}
+};
+
+************************
+pr144. Binary Tree Preorder Traversal, Medium
+
+Question:
+
+Given a binary tree, return the preorder traversal of its nodes' values.
+
+Example:
+
+Input: [1,null,2,3]
+   1
+    \
+     2
+    /
+   3
+
+Output: [1,2,3]
+Follow up: Recursive solution is trivial, could you do it iteratively?
+
+==
+Key:
+
+Recursive: See "pr 94. Binary Tree Inorder Traversal".
+Iterative: See "pr 94. Binary Tree Inorder Traversal".
+
+==
+C++ code (recursive):
+
+class Solution {
+private:
+    void helper(TreeNode* cur, vector<int>& res) {
+        res.push_back(cur->val);
+        if(cur->left) helper(cur->left, res);
+        if(cur->right) helper(cur->right, res);
+    }
+    
+public:
+    vector<int> preorderTraversal(TreeNode* root) {
+        vector<int> res;
+        if(!root) return res;
+        helper(root, res);
+        return res;
+    }
+};
+
+==
+C++ code (iterative):
+
+class Solution {
+public:
+    vector<int> preorderTraversal(TreeNode* root) {
+        vector<int> res;
+        if(!root) return res;
+
+        stack<TreeNode*> stack;
+        TreeNode* cur = root;
+
+        while(cur) {
+            stack.push(cur);
+            res.push_back(cur->val);
+            cur = cur->left;        
+        }
+
+        while(!stack.empty()) {
+            TreeNode* top = stack.top();
+            stack.pop();
+
+            if(top->right) {
+                TreeNode* n = top->right;
+                while(n) {
+                    stack.push(n);
+                    res.push_back(n->val);
+                    n = n->left;   
+                }
+            }
+
+        }
+        
+        return res;
+    }
+};
+
+************************
+pr145. Binary Tree Postorder Traversal, Hard 
+
+Question:
+
+Given a binary tree, return the postorder traversal of its nodes' values.
+
+Example:
+
+Input: [1,null,2,3]
+   1
+    \
+     2
+    /
+   3
+
+Output: [3,2,1]
+Follow up: Recursive solution is trivial, could you do it iteratively?
+
+==
+Key:
+
+Recursive: See "pr 94. Binary Tree Inorder Traversal".
+
+Iterative: First do a pre-order traversal (in the code, exchange all "left" and "right"). Then reverse the result vector. Think of it using a three-node tree.
+
+==
+C++ code (recursive):
+
+class Solution {
+private:
+	void helper(TreeNode* cur, vector<int>& res) {
+		if(cur->left) helper(cur->left, res);
+		if(cur->right) helper(cur->right, res);
+		res.push_back(cur->val);
+	}
+
+public:
+    vector<int> postorderTraversal(TreeNode* root) {
+    	vector<int> res;
+    	if(!root) return res;
+        helper(root, res);
+        return res;
+    }
+};
+
+==
+C++ code (iterative):
+
+class Solution {
+public:
+    vector<int> postorderTraversal(TreeNode* root) {
+        vector<int> res;
+        if(!root) return res;
+
+        stack<TreeNode*> stack;
+        TreeNode* cur = root;
+
+        while(cur) {
+            stack.push(cur);
+            res.push_back(cur->val);
+            cur = cur->right;        
+        }
+
+        while(!stack.empty()) {
+            TreeNode* top = stack.top();
+            stack.pop();
+
+            if(top->left) {
+                TreeNode* n = top->left;
+                while(n) {
+                    stack.push(n);
+                    res.push_back(n->val);
+                    n = n->right;   
+                }
+            }
+        }
+
+        //Reverse res:
+
+        vector<int> res_reverse;
+
+        for(auto it = res.rbegin(); it != res.rend(); ++it)  
+        	res_reverse.push_back(*it);
+        
+        return res_reverse;
+    }
+};
+
+************************
+pr102. Binary Tree Level Order Traversal, Easy
+
+Question:
+
+Given a binary tree, return the level order traversal of its nodes' values. (ie, from left to right, level by level).
+
+For example:
+Given binary tree [3,9,20,null,null,15,7],
+    3
+   / \
+  9  20
+    /  \
+   15   7
+return its level order traversal as:
+[
+  [3],
+  [9,20],
+  [15,7]
+]
+
+==
+Key: BFS. Use a queue. Use two numbers: cur_num (number of nodes left in the current level), next_num (number of nodes left in the next level). First add root to the queue. Then in the loop, in each iteration, take a node from the queue, add it to the result vector, if this node has left child then add it to the queue, if this node has right child then add it to the queue.
+
+==
+C++ code:
+
+Used CodeGanker style code. The leetcode discusison code is simpler, but still use CodeGanker style code because it is easier to understanad and remember.
+
+class Solution {
+public:
+    vector<vector<int>> levelOrder(TreeNode* root) {
+		vector<vector<int>> res;
+		if(!root) return res;
+
+		vector<int> item;
+
+		queue<TreeNode*> q;
+		q.push(root);
+		int cur_num = 1, next_num = 0;
+
+		while(!q.empty()) {
+			TreeNode* cur = q.front();
+			item.push_back(cur->val);
+			q.pop();
+			--cur_num;
+
+			if(cur->left) {
+				q.push(cur->left);
+				++next_num;
+			}
+
+			if(cur->right) {
+				q.push(cur->right);
+				++next_num;
+			}
+
+			if(cur_num == 0) {
+				cur_num = next_num;
+				next_num = 0;
+				res.push_back(item); //Pass by value (pass a copy of item)
+				item.clear();
+			}
+		}
+
+		return res;
+    }
+};
+
+************************
+pr107. Binary Tree Level Order Traversal II, Easy 
+
+Question:
+
+Given a binary tree, return the bottom-up level order traversal of its nodes' values. (ie, from left to right, level by level from leaf to root).
+
+For example:
+Given binary tree [3,9,20,null,null,15,7],
+    3
+   / \
+  9  20
+    /  \
+   15   7
+return its bottom-up level order traversal as:
+[
+  [15,7],
+  [9,20],
+  [3]
+]
+
+==
+Key: The code is the same as "pr 102. Binary Tree Level Order Traversal", just with the result reversed at the end.
+
+==
+C++ code:
+
+
+class Solution {
+public:
+    vector<vector<int>> levelOrderBottom(TreeNode* root) {
+		vector<vector<int>> res;
+		if(!root) return res;
+
+		vector<int> item;
+
+		queue<TreeNode*> q;
+		q.push(root);
+		int cur_num = 1, next_num = 0;
+
+		while(!q.empty()) {
+			TreeNode* cur = q.front();
+			item.push_back(cur->val);
+			q.pop();
+			--cur_num;
+
+			if(cur->left) {
+				q.push(cur->left);
+				++next_num;
+			}
+
+			if(cur->right) {
+				q.push(cur->right);
+				++next_num;
+			}
+
+			if(cur_num == 0) {
+				cur_num = next_num;
+				next_num = 0;
+				res.push_back(item); //Pass by value (pass a copy of item)
+				item.clear();
+			}
+		}
+        
+        reverse(res.begin(), res.end());
+
+		return res;
+    }
+};
+
+************************
+pr103. Binary Tree Zigzag Level Order Traversal, Medium
+
+Question:
+
+Given a binary tree, return the zigzag level order traversal of its nodes' values. (ie, from left to right, then right to left for the next level and alternate between).
+
+For example:
+
+Given binary tree [3,9,20,null,null,15,7],
+
+    3
+   / \
+  9  20
+    /  \
+   15   7
+
+return its zigzag level order traversal as:
+[
+  [3],
+  [20,9],
+  [15,7]
+]
+
+==
+Key: Use two stacks. Put the 1st level in stack1, put the 2nd level in stack2, and so on.
+
+==
+C++ code:
+(Tao's code modified according to the earlier Java code).
+
+class Solution {
+public:
+    vector<vector<int>> zigzagLevelOrder(TreeNode* root) {
+        vector<vector<int>> res;
+        if(!root) return res;
+
+        vector<int> item;
+
+        stack<TreeNode*> stack1;
+        stack<TreeNode*> stack2;
+
+        stack1.push(root);
+        
+        int cur_num = 1, next_num = 0, level = 1;
+
+        while(!stack1.empty() || !stack2.empty()) {
+ 
+        	if(level % 2 == 1) {
+        		TreeNode* cur = stack1.top();
+	        	stack1.pop();
+	        	item.push_back(cur->val);
+	        	--cur_num;
+
+	        	if(cur->left) {
+	        		stack2.push(cur->left);
+	        		++next_num;
+	        	}
+
+	        	if(cur->right) {
+	        		stack2.push(cur->right);
+	        		++next_num;
+	        	}
+
+        	} else {
+        		TreeNode* cur = stack2.top();
+	        	stack2.pop();
+	        	item.push_back(cur->val);
+	        	--cur_num;
+
+	        	if(cur->right) {
+	        		stack1.push(cur->right);
+	        		++next_num;
+	        	}
+
+	        	if(cur->left) {
+	        		stack1.push(cur->left);
+	        		++next_num;
+	        	}
+        	}
+
+        	if(cur_num == 0) {
+        		cur_num = next_num;
+        		next_num = 0;
+        		res.push_back(item); //Pass by value (pass a copy of item)
+        		item.clear();
+        		++level;
+        	}
+
+        }
+
+        return res;
+    }
+};
+
+************************
+pr100. Same Tree, Easy.
+
+Question:
+
+Given two binary trees, write a function to check if they are the same or not.
+
+Two binary trees are considered the same if they are structurally identical and the nodes have the same value.
+
+Example 1:
+
+Input:     1         1
+          / \       / \
+         2   3     2   3
+
+        [1,2,3],   [1,2,3]
+
+Output: true
+
+Example 2:
+
+Input:     1         1
+          /           \
+         2             2
+
+        [1,2],     [1,null,2]
+
+Output: false
+
+Example 3:
+
+Input:     1         1
+          / \       / \
+         2   1     1   2
+
+        [1,2,1],   [1,1,2]
+
+Output: false
+
+
+==
+Key: Recursively call isSameTree() on the left and right subtree.
+
+==
+C++ code:
+
+class Solution {
+public:
+    bool isSameTree(TreeNode* p, TreeNode* q) {
+    	if(!p && !q) return true;
+        if(!p || !q) return false;
+
+        if(p->val != q->val) return false; 
+
+        return isSameTree(p->left, q->left) && isSameTree(p->right, q->right);
+    }
+};
+
+************************
+pr101. Symmetric Tree, Easy 
+
+Question:
+
+Given a binary tree, check whether it is a mirror of itself (ie, symmetric around its center).
+
+For example, this binary tree [1,2,2,3,4,4,3] is symmetric:
+
+    1
+   / \
+  2   2
+ / \ / \
+3  4 4  3
+
+But the following [1,2,2,null,3,null,3] is not:
+    1
+   / \
+  2   2
+   \   \
+   3    3
+
+Note:
+Bonus points if you could solve it both recursively and iteratively.
+
+Tao: an example of a larger symmmetric tree:
+
+	        1 
+	   /         \
+	   2          2
+	 /   \      /   \
+	3     4     4    3
+   / \   / \   / \  / \
+  5   6 7   8 8  7 6   5
+
+==
+Key:
+
+Recursive: write a function bool isTwoTreesSymmetric(TreeNode* root1, TreeNode* root2) to determine whether the tree is symmetric. isTwoTreesSymmetric calls itself recursively.
+
+Iterative: BFS. Use two queues. q1 stores nodes in subtree of root->left, each layer is stored from left to right. q2 stores nodes in subtree of root->right, each layer is stored from right to left. The key point is that the null node also needs to put in queue. Each time gets two nodes from q1 and q2 and compare them. No need to know whether the end of each layer, so no need to use cur_num and next_num.
+
+==
+C++ code (recursive):
+
+class Solution {
+private: 
+	bool isTwoTreesSymmetric(TreeNode* root1, TreeNode* root2) {
+		if(!root1 && !root2) return true;
+		if(!root1 || !root2) return false;
+		if(root1->val != root2->val) return false;
+
+		return isTwoTreesSymmetric(root1->left, root2->right) && isTwoTreesSymmetric(root1->right, root2->left);
+	}
+
+public:
+    bool isSymmetric(TreeNode* root) {
+        if(!root) return true;
+        return isTwoTreesSymmetric(root->left, root->right);
+    }
+};
+
+C++ code (iterative):
+(Modified according to my Java code, but simpler than my Java code)
+
+class Solution {
+public:
+    bool isSymmetric(TreeNode* root) {
+        if(!root) return true;
+        if(!root->left && !root->right) return true;
+        if(!root->left || !root->right) return false;
+        if(root->left->val != root->right->val) return false;
+
+        queue<TreeNode*> q1;
+        queue<TreeNode*> q2;
+        q1.push(root->left);
+        q2.push(root->right);
+
+        while(!q1.empty() && !q2.empty()) {
+            TreeNode* cur1 = q1.front();
+            q1.pop();
+
+            TreeNode* cur2 = q2.front();
+            q2.pop();
+
+            if(!cur1 && !cur2) continue;
+            if(!cur1 || !cur2) return false;
+            if(cur1->val != cur2->val) return false;
+           
+            q1.push(cur1->left);         
+            q1.push(cur1->right);              
+            q2.push(cur2->right);  
+            q2.push(cur2->left);
+        }
+        
+        return true;
+    }
+};
+
+************************
+pr116. Populating Next Right Pointers in Each Node, Medium 
+
+Question:
+
+You are given a perfect binary tree where all leaves are on the same level, and every parent has two children. The binary tree has the following definition:
+
+struct Node {
+  int val;
+  Node *left;
+  Node *right;
+  Node *next;
+}
+
+Populate each next pointer to point to its next right node. If there is no next right node, the next pointer should be set to NULL.
+
+Initially, all next pointers are set to NULL.
+
+Example:
+(Tao: has picture, no need to include here)
+
+Note:
+
+You may only use constant extra space.
+Recursive approach is fine, implicit stack space does not count as extra space for this problem.
+
+==
+Key: Iterative. Process layer by layer (like BFS but does not use queue). Assume all the next pointers in current layer have already been correctly set. Now set next pointers in the lower layer. The way is to use three pointers in the current layer: cur points to the current node in current layer, cur_next points to cur's next node, layer_head points to the left-most node in currnet layer. cur moves from left to right on current layer, and set all next pointers in the lower layer. When cur reaches the right-most node, it moves to the left-most node of the lower layer.
+
+Note: Tao first wrote accepted code using normal BFS (with queue), but it uses more space (the queue size). The above way (designed and written by Tao, and similar to CodeGanker) does not use queue, so it uses less space.
+
+==
+C++ code:
+
+class Solution {
+public:
+    Node* connect(Node* root) {        
+        Node *cur = root, *cur_next = NULL, *layer_head = root;
+        
+        while(cur && cur->left) {
+            cur_next = cur->next;
+            cur->left->next = cur->right;
+
+            if(cur_next) {
+                cur->right->next = cur_next->left;
+                cur = cur_next;
+                cur_next = cur_next->next;
+            } else {
+                layer_head = layer_head->left;
+                cur = layer_head;
+            }   
+        }
+     
+        return root;
+    }
+};
+
+==
+Python code:
+
+class Solution:
+    def connect(self, root: 'Node') -> 'Node':
+        cur = root
+        cur_next = None
+        layer_head = root
+        
+        while cur and cur.left:
+            cur_next = cur.next
+            cur.left.next = cur.right
+            
+            if cur_next:
+                cur.right.next = cur.next.left
+                cur = cur_next
+                cur_next = cur_next.next
+            else:
+                layer_head = layer_head.left
+                cur = layer_head
+        
+        return root
+
+************************
+pr117. Populating Next Right Pointers in Each Node II, Hard.
+
+Question:
+
+Given a binary tree
+
+struct Node {
+  int val;
+  Node *left;
+  Node *right;
+  Node *next;
+}
+
+Populate each next pointer to point to its next right node. If there is no next right node, the next pointer should be set to NULL.
+
+Initially, all next pointers are set to NULL.
+
+Example:
+(Tao: has picture, no need to include here)
+
+Note:
+
+You may only use constant extra space.
+Recursive approach is fine, implicit stack space does not count as extra space for this problem.
+
+Tao: the difference from pr116 is that here is an ordinary binary tree, instead of a perfect binary tree.
+
+==
+Key: The method is the same as "pr116. Populating Next Right Pointers in Each Node". Use the same pointers as pr116, and add pointer cur_right_most to denote the right most child of cur, and add pointer cur_next_left_most to denote the left most child of cur_next. Assign cur_right_most->next = cur_next_left_most. Be careful about corner cases, for example, the head (the left most node) of the next layer may not have left child.
+
+==
+C++ code:
+
+class Solution {
+public:
+    Node* connect(Node* root) {
+        Node *cur = root, *cur_next = NULL, *layer_head = root;
+        
+        while(cur) {
+            cur_next = cur->next;
+            Node* cur_right_most = NULL;
+            
+            if(cur->left && cur->right) {
+                cur->left->next = cur->right;
+                cur_right_most = cur->right;
+            } else {
+                cur_right_most = cur->left ? cur->left : cur->right;
+            }
+            
+            if(cur_right_most) {
+                while(cur_next && !cur_next->left && !cur_next->right) {
+                    cur_next = cur_next->next;
+                }
+                
+                if(cur_next) {
+                    Node* cur_next_left_most = cur_next->left ? cur_next->left : cur_next->right;
+                    cur_right_most->next = cur_next_left_most;   
+                }
+            } 
+
+            if(cur_next) {
+                cur = cur_next;
+            } else {
+                while(layer_head && !layer_head->left && !layer_head->right) layer_head = layer_head->next;
+                if(layer_head) layer_head = layer_head->left ? layer_head->left : layer_head->right;
+                cur = layer_head;
+            }
+           
+        }
+     
+        return root;
+    }
+};
+
+==
+Python code:
+
+class Solution:
+    def connect(self, root: 'Node') -> 'Node':
+    	cur = root
+    	cur_next = None
+    	layer_head = root
+
+    	while cur:
+    		cur_next = cur.next 
+    		cur_right_most = None
+
+    		if cur.left and cur.right:
+    			cur.left.next = cur.right 
+    			cur_right_most = cur.right 
+    		elif cur.left:
+    			cur_right_most = cur.left
+    		else:
+    			cur_right_most = cur.right 
+
+    		if cur_right_most:
+    			while cur_next and not cur_next.left and not cur_next.right:
+    				cur_next = cur_next.next 
+
+    			cur_next_left_most = None 
+
+    			if cur_next:
+    				if cur_next.left:
+    					cur_next_left_most = cur_next.left 
+    				else:
+    					cur_next_left_most = cur_next.right 
+    				cur_right_most.next = cur_next_left_most
+
+    		if cur_next:
+    			cur = cur_next
+    		else:
+    			while layer_head and not layer_head.left and not layer_head.right:
+    				layer_head = layer_head.next 
+    			if layer_head:
+    				if layer_head.left:
+    					layer_head = layer_head.left 
+    				else:
+    					layer_head = layer_head.right 
+    			cur = layer_head
+    	return root
+
+************************
+pr104. Maximum Depth of Binary Tree
+
+Question:
+
+Given a binary tree, find its maximum depth.
+
+The maximum depth is the number of nodes along the longest path from the root node down to the farthest leaf node.
+
+Note: A leaf is a node with no children.
+
+Example:
+
+Given binary tree [3,9,20,null,null,15,7],
+
+    3
+   / \
+  9  20
+    /  \
+   15   7
+
+return its depth = 3.
+
+==
+Key: BFS. Use an int level to denote the current level, and finally return level. Do not use recursion because it needs to call itself twice (LeetCode Discussion also calls twice).
+
+==
+C++ code:
+
+class Solution {
+public:
+    int maxDepth(TreeNode* root) {
+        if(!root) return 0;
+        
+        queue<TreeNode*> q;
+        q.push(root);
+        int cur_num = 1, next_num = 0, level = 0;
+        
+        while(!q.empty()) {
+            TreeNode* cur = q.front();
+            q.pop();
+            --cur_num;
+            
+            if(cur->left) {
+                q.push(cur->left);
+                ++next_num;
+            }
+            
+            if(cur->right) {
+                q.push(cur->right);
+                ++next_num;
+            }
+            
+            if(cur_num == 0) {
+                cur_num = next_num;
+                next_num = 0;
+                ++level;
+            }
+            
+        }
+        
+        return level;
+    }
+};
+
+==
+Python code:
+
+from collections import deque
+
+class Solution:
+    def maxDepth(self, root: TreeNode) -> int:
+        if not root:
+            return 0
+        
+        q = deque([])
+        q.append(root)
+        
+        cur_num = 1
+        next_num = 0
+        level = 0
+        
+        while len(q) > 0:
+            cur = q.popleft()
+            cur_num -= 1
+            
+            if cur.left:
+                q.append(cur.left)
+                next_num += 1
+            
+            if cur.right:
+                q.append(cur.right)
+                next_num += 1
+            
+            if cur_num == 0:
+                cur_num = next_num
+                next_num = 0
+                level += 1
+                
+        return level
+     
+************************
+pr111. Minimum Depth of Binary Tree, Easy. 
+
+Question:
+
+Given a binary tree, find its minimum depth.
+
+The minimum depth is the number of nodes along the shortest path from the root node down to the nearest leaf node.
+
+Note: A leaf is a node with no children.
+
+Example:
+
+Given binary tree [3,9,20,null,null,15,7],
+
+    3
+   / \
+  9  20
+    /  \
+   15   7
+return its minimum depth = 2.
+
+
+==
+Key: BFS. Return level when a node has no children.
+
+==
+C++ code:
+
+class Solution {
+public:
+    int minDepth(TreeNode* root) {
+        if(!root) return 0;
+
+        queue<TreeNode*> q;
+        q.push(root);
+        int cur_num = 1, next_num = 0, level = 0;
+
+        while(!q.empty()) {
+        	TreeNode* cur = q.front();
+        	q.pop();
+        	--cur_num;
+
+            if(!cur->left && !cur->right) return level + 1;
+            
+        	if(cur->left) {
+        		q.push(cur->left);
+        		++next_num;
+        	}
+
+        	if(cur->right) {
+        		q.push(cur->right);
+        		++next_num;
+        	}
+
+        	if(cur_num == 0) {
+        		cur_num = next_num;
+        		next_num = 0;
+        		++level;
+        	}
+
+        }
+
+        return level;
+    }
+};
+
+==
+Python code:
+
+from collections import deque
+
+class Solution:
+    def minDepth(self, root: TreeNode) -> int:
+        if not root:
+            return 0
+
+        q = deque([])
+        q.append(root)
+        cur_num = 1
+        next_num = 0
+        level = 0
+
+        while len(q) > 0:
+            cur = q.popleft()
+            cur_num -= 1
+
+            if not cur.left and not cur.right:
+                return level + 1
+
+            if cur.left:
+                q.append(cur.left)
+                next_num += 1
+
+            if cur.right:
+                q.append(cur.right)
+                next_num += 1
+
+            if cur_num == 0:
+                cur_num = next_num
+                next_num = 0
+                level += 1
+
+        return level
+
+************************
+pr156. Binary Tree Upside Down, Medium, Locked
+
+Question:
+
+Given a binary tree where all the right nodes are either leaf nodes with a sibling (a left node that shares the same parent node) or empty, flip it upside down and turn it into a tree where the original right nodes turned into left leaf nodes. Return the new root.
+
+For example:
+Given a binary tree {1,2,3,4,5},
+
+    1
+   / \
+  2   3
+ / \
+4   5
+
+return the root of the binary tree [4,5,2,#,#,3,1].
+
+  4
+ / \
+5   2
+   / \
+  3   1
+
+Tao: the meaning of the question is to first convert the above tree to
+
+    1
+   / 
+  2 - 3
+ / 
+4 - 5
+
+and then grab node 4 and lift it up, then it will become the final tree.
+
+==
+Key: The method is the same as my comment in the question, for example, change to 2->right = 3, 2->left = 1, same to 4. Finally return node 4. Use iteration with pointers cur, cur_left, cur_left_left. Note that when processing a node, its left and right children may have already been changed, so need to save these pointers before hand.
+
+Tao's C++ code below passed my 11 tests. So I can take it as passed.
+
+==
+C++ code:
+
+class Solution {
+public: 
+	TreeNode* upsideDown(TreeNode* root) {
+		if(!root) return root;
+		TreeNode *cur = root, *cur_left = cur->left, *cur_right = cur->right;
+		TreeNode* cur_left_left = cur->left ? cur->left->left : NULL;
+
+		while(cur && cur_left) {
+			cur_left->left = cur_right;
+			cur_right = cur_left->right;
+			cur_left->right = cur;
+			
+			cur = cur_left;
+			cur_left = cur_left_left;
+			if(cur_left_left) cur_left_left = cur_left_left->left;
+		}
+
+		root->left = NULL;
+		root->right = NULL;
+
+		return cur;
+	}
+};
+
+************************
+pr199. Binary Tree Right Side View, Medium
+
+Question: 
+
+Given a binary tree, imagine yourself standing on the right side of it, return the values of the nodes you can see ordered from top to bottom.
+
+Example:
+
+Input: [1,2,3,null,5,null,4]
+Output: [1, 3, 4]
+Explanation:
+
+   1            <---
+ /   \
+2     3         <---
+ \     \
+  5     4       <---
+
+==
+Key: BFS. Put the last node of a layer to the result vector.
+
+==
+C++ code:
+
+class Solution {
+public:
+    vector<int> rightSideView(TreeNode* root) {
+        vector<int> res;
+        if(!root) return res;
+        if(!root->left && !root->right) {
+            res.push_back(root->val);
+            return res;
+        }
+        
+        queue<TreeNode*> queue;
+        queue.push(root);
+        int cur_num = 1, next_num = 0;
+        while(!queue.empty()) {
+            TreeNode* cur = queue.front();
+            queue.pop();
+            --cur_num;
+            
+            if(cur->left) {
+                queue.push(cur->left);
+                ++next_num;
+            }
+            
+            if(cur->right) {
+                queue.push(cur->right);
+                ++next_num;
+            }
+            
+            if(cur_num == 0) {
+               res.push_back(cur->val);
+                cur_num = next_num;
+                next_num = 0;
+            }
+        }
+                
+        return res;
+    }
+};
+
+************************
+pr226. Invert Binary Tree, Easy 
+
+Question:
+
+Invert a binary tree.
+
+Example:
+
+Input:
+
+     4
+   /   \
+  2     7
+ / \   / \
+1   3 6   9
+Output:
+
+     4
+   /   \
+  7     2
+ / \   / \
+9   6 3   1
+
+Trivia:
+This problem was inspired by this original tweet by Max Howell:
+
+Google: 90% of our engineers use the software you wrote (Homebrew), but you can’t invert a binary tree on a whiteboard so f*** off.
+
+==
+Key: BFS. Swap children of each node. Do not use DFS, because it needs to call itself twice, which has a much higher time complexity.
+
+==
+C++ code:
+
+class Solution {
+public:
+	TreeNode* invertTree(TreeNode* root) {
+	    if(!root) return root;
+	        
+	    queue<TreeNode*> queue;
+	    queue.push(root);
+	    
+	    int cur_num = 1, next_num = 0;
+	    
+	    while(!queue.empty()) {
+	        TreeNode* cur = queue.front();
+	        queue.pop();
+	        --cur_num;
+	      
+	        if(cur->left) 
+	            queue.push(cur->left);
+	        
+	        if(cur->right)        
+	            queue.push(cur->right);
+	        
+	        TreeNode* temp = cur->left;
+	        cur->left = cur->right;
+	        cur->right = temp;
+	        
+	        if(cur_num ==0) {
+	            cur_num = next_num;
+	            next_num = 0;
+	        }
+	        
+	    }
+	        
+	     return root;   
+	    
+	}
+};
+
+************************
+pr129. Sum Root to Leaf Numbers, Medium. 
+
+Question:
+
+Given a binary tree containing digits from 0-9 only, each root-to-leaf path could represent a number.
+
+An example is the root-to-leaf path 1->2->3 which represents the number 123.
+
+Find the total sum of all root-to-leaf numbers.
+
+Note: A leaf is a node with no children.
+
+Example:
+
+Input: [1,2,3]
+    1
+   / \
+  2   3
+Output: 25
+Explanation:
+The root-to-leaf path 1->2 represents the number 12.
+The root-to-leaf path 1->3 represents the number 13.
+Therefore, sum = 12 + 13 = 25.
+
+Example 2:
+
+Input: [4,9,0,5,1]
+    4
+   / \
+  9   0
+ / \
+5   1
+Output: 1026
+Explanation:
+The root-to-leaf path 4->9->5 represents the number 495.
+The root-to-leaf path 4->9->1 represents the number 491.
+The root-to-leaf path 4->0 represents the number 40.
+Therefore, sum = 495 + 491 + 40 = 1026.
+
+==
+Key: Recursion. Write a function vector<string> get_list(TreeNode* nide), which returns a list of all node_to_leaf numbers (in string format). Recursively call itself on its left and right children.
+
+==
+C++ code:
+
+class Solution {
+    
+private:
+	vector<string> get_list(TreeNode* node) {
+	    
+	    vector<string> res;
+	    if(!node) return res;
+	    
+	    if(!node->left && !node->right) {
+	        res.push_back(to_string(node->val));
+	        return res;
+	    }
+	    
+	    vector<string> left_list = get_list(node->left);
+	    
+	    vector<string> right_list = get_list(node->right);
+	    
+	    for(string s: left_list) {
+	        res.push_back(to_string(node->val) + s);
+	    }
+	    
+	    for(string s: right_list) { 
+	      res.push_back(to_string(node->val) + s);
+	    }
+	     
+	    return res;
+	}
+    
+public:
+	int sumNumbers(TreeNode* root) {
+	    vector<string> list = get_list(root);
+	    
+	    int sum = 0;
+	    
+	    for(string s: list) sum += stoi(s);
+	    
+	    return sum;
+	}
+};
+
+************************
+pr112. Path Sum, Easy. 
+
+Question:
+
+Given a binary tree and a sum, determine if the tree has a root-to-leaf path such that adding up all the values along the path equals the given sum.
+
+Note: A leaf is a node with no children.
+
+Example:
+
+Given the below binary tree and sum = 22,
+
+      5
+     / \
+    4   8
+   /   / \
+  11  13  4
+ /  \      \
+7    2      1
+return true, as there exist a root-to-leaf path 5->4->11->2 which sum is 22.
+
+==
+Key: Recursion. Call the function itself recursively on root-> left and root->right.
+
+==
+C++ code:
+
+class Solution {
+public:
+	bool hasPathSum(TreeNode* root, int sum) {
+	    if(!root) return false;
+	        
+	    if(!root->left && !root->right) return (root->val == sum);
+	    
+	    return hasPathSum(root->left, sum - root->val) || hasPathSum(root->right, sum - root->val);
+	}
+};
+
+************************
+pr113. Path Sum II, Medium.
+
+Question:
+
+Given a binary tree and a sum, find all root-to-leaf paths where each path's sum equals the given sum.
+
+Note: A leaf is a node with no children.
+
+Example:
+
+Given the below binary tree and sum = 22,
+
+      5
+     / \
+    4   8
+   /   / \
+  11  13  4
+ /  \    / \
+7    2  5   1
+Return:
+
+[
+   [5,4,11,2],
+   [5,8,4,5]
+]
+
+==
+Key: DFS. Recursively call pathSum on root->left and root->right. 
+
+==
+C++ code:
+
+class Solution {
+public:
+	vector<vector<int>> pathSum(TreeNode* root, int sum) {
+	    vector<vector<int>> res;
+	    if(!root) return res;
+	    
+	    if(!root->left && !root->right) {
+	        if(root->val == sum) {
+	            vector<int> path;
+	            path.push_back(root->val);
+	            res.push_back(path);
+	            return res;
+	        } else {
+	            return res;
+	        }
+	    }
+	    
+	    int new_sum = sum - root->val;
+	    
+	    vector<vector<int>> left_paths = pathSum(root->left, new_sum);
+	    
+	    vector<vector<int>> right_paths = pathSum(root->right, new_sum);
+	    
+	    for(vector<vector<int>>::iterator it = left_paths.begin(); it != left_paths.end(); ++it) {
+	        vector<int> path = *it;
+	        path.insert(path.begin(), root->val);
+	        res.insert(res.begin(), path);
+	    }
+	    for(vector<vector<int>>::iterator it = right_paths.begin(); it != right_paths.end(); ++it) {
+	        vector<int> path = *it;
+	        path.insert(path.begin(), root->val);
+	        res.insert(res.begin(), path);
+	    }
+	    
+	    return res;
+	}
+};
+
+************************
+pr124. Binary Tree Maximum Path Sum, Hard.
+
+Question:
+
+Given a non-empty binary tree, find the maximum path sum.
+
+For this problem, a path is defined as any sequence of nodes from some starting node to any node in the tree along the parent-child connections. The path must contain at least one node and does not need to go through the root.
+
+Example 1:
+
+Input: [1,2,3]
+
+       1
+      / \
+     2   3
+
+Output: 6
+Example 2:
+
+Input: [-10,9,20,null,null,15,7]
+
+   -10
+   / \
+  9  20
+    /  \
+   15   7
+
+Output: 42
+
+==
+Key: DFS. Use a global variable  max_turn_sum to denote the result of the question. Write a function  int helper(TreeNode* node), which does two things: 1. Returns the max sum of the no-turn path starting at node. 2. Caculates the max sum of the turning path which turns at node, and update the global variable max_turn_sum. helper calls itself recursively. The solution in LC Discussion also used global variable. 
+
+Tao: this is CoderGanker's method. My own method passed but is more complicated so I did not use it. CodeGanker used ArrayList to store max_turn_sum in Java, instead of global varible which has to be used in C++.
+
+==
+C++ code:
+
+class Solution {
+private:
+int max_turn_sum = INT_MIN;
+    
+public:
+	int helper(TreeNode* node) {
+	    if(!node) return INT_MIN;
+	    
+	    int left_start_sum = helper(node->left);
+	    int right_start_sum = helper(node->right);
+	    
+	    int start_sum = node->val + max(max(left_start_sum, 0), max(right_start_sum, 0));
+	    
+	    int turn_sum = node->val + max(left_start_sum, 0) + max(right_start_sum, 0);
+	   
+	    max_turn_sum = max(max_turn_sum, turn_sum);
+	    
+	    return start_sum;
+	}
+	    
+	int maxPathSum(TreeNode* root) {    
+	    helper(root);
+	    return max_turn_sum;    
+	 
+	}
+};
+
+************************
+pr110. Balanced Binary Tree, Easy.
+
+Question:
+
+Given a binary tree, determine if it is height-balanced.
+
+For this problem, a height-balanced binary tree is defined as:
+
+a binary tree in which the left and right subtrees of every node differ in height by no more than 1.
+
+ 
+
+Example 1:
+
+Given the following tree [3,9,20,null,null,15,7]:
+
+    3
+   / \
+  9  20
+    /  \
+   15   7
+Return true.
+
+Example 2:
+
+Given the following tree [1,2,2,3,3,null,null,4,4]:
+
+       1
+      / \
+     2   2
+    / \
+   3   3
+  / \
+ 4   4
+Return false.
+
+==
+Key: Recursion. write a funtion int getHeight(TreeNode* node), which returns the height of node subtree. If the node subtree is not balanced, return -1. getHeight calls itself recursively.
+
+Tao: the idea of returning -1 was from CodeGanker. I originally used a global bool variable.
+
+==
+C++ code:
+
+class Solution {
+private:
+	int getHeight(TreeNode* node) {
+	    if(!node) return 0;
+	    
+	    int left_height = getHeight(node->left);
+	    int right_height = getHeight(node->right);
+	    
+	    if(left_height < 0 || right_height < 0) return -1;
+	    
+	    if(abs(left_height - right_height) > 1) return -1;
+	    
+	    return max(left_height, right_height) + 1;
+	}
+	    
+public:
+	bool isBalanced(TreeNode* root) {
+	    return getHeight(root) >= 0;
+	}
+};
+
+************************
+pr114. Flatten Binary Tree to Linked List, Medium.
+
+Question:
+
+Given a binary tree, flatten it to a linked list in-place.
+
+For example, given the following tree:
+
+    1
+   / \
+  2   5
+ / \   \
+3   4   6
+The flattened tree should look like:
+
+1
+ \
+  2
+   \
+    3
+     \
+      4
+       \
+        5
+         \
+          6
+
+Tao: after flatten, each nodes's left child should be null, otherwise won't pass or exceeds time limit.
+
+==
+Key: Recursion. Write a function: TreeNode* helper(TreeNode* node), which flattens the node tree and returns the last (righth-most) node. helper calls itself recursively.
+
+==
+C++ code:
+
+class Solution {
+private:
+	TreeNode* helper(TreeNode* node) {
+	    if(!node) return node;
+	    if(!node->left && !node->right) return node;
+	    
+	    TreeNode* left_tail = helper(node->left);
+	    TreeNode* right_tail = helper(node->right);
+	    
+	    if(!node->left && node->right) return right_tail;
+	    
+	    if(!node->right && node->left) {
+	        node->right = node->left;
+	        node->left = NULL;
+	        return left_tail;
+	    }
+	    
+	    left_tail->right = node->right;
+	    node->right = node->left;
+	    node->left = NULL;
+	    return right_tail;
+	}
+    
+public:
+	void flatten(TreeNode* root) {   
+	    TreeNode* helo = helper(root);
+	}
+};
+
+
+************************
+pr105. Construct Binary Tree from Preorder and Inorder Traversal, Medium 
+
+Question:
+
+Given preorder and inorder traversal of a tree, construct the binary tree.
+
+Note:
+You may assume that duplicates do not exist in the tree.
+
+For example, given
+
+preorder = [3,9,20,15,7]
+inorder = [9,3,15,20,7]
+Return the following binary tree:
+
+    3
+   / \
+  9  20
+    /  \
+   15   7
+
+==
+Key: Recursion. For example, if preorder is "1 245 3687", and inorder is "425 1 6837", then we know 1 is the root, 425 is the left tree, 6837 is the right tree. Write a function:
+
+TreeNode* buildSubTree(vector<int>& preorder, int pre_begin, int pre_end, vector<int>& inorder, int in_begin, int in_end, unordered_map<int, int>& map)
+
+which builds a tree using preorder[pre_begin, pre_end] as preorder, and using inorder[in_begin, in_end] as inorder. map records a node's index in inorder, ie, map[inorder[i]] = i. This function returns the root of the built tree.
+
+CodeGanker used exactly the same method.
+
+==
+C++ code:
+
+class Solution {
+private:
+    TreeNode* buildSubTree(vector<int>& preorder, int pre_begin, int pre_end, vector<int>& inorder, int in_begin, int in_end, unordered_map<int, int>& map) {
+        int size = pre_end - pre_begin + 1;
+        if(size == 0) return NULL;
+
+        int root_val = preorder[pre_begin];
+        TreeNode* root = new TreeNode(root_val);
+
+        if(size == 1) return root;
+
+        int root_idx = map[root_val];
+        int left_size = root_idx - in_begin;
+        int right_size = in_end - root_idx;
+
+        root->left = buildSubTree(preorder, pre_begin + 1, pre_begin + left_size, inorder, in_begin, root_idx - 1, map);
+        root->right = buildSubTree(preorder, pre_begin + left_size + 1, pre_end, inorder, root_idx + 1, in_end, map);
+
+        return root;
+    }
+
+public:
+    TreeNode* buildTree(vector<int>& preorder, vector<int>& inorder) {
+        unordered_map<int, int> map;
+        int size = inorder.size();
+        for(int i = 0; i < size; ++i) map[inorder[i]] = i;
+        return buildSubTree(preorder, 0, size - 1, inorder, 0, size - 1, map);
+    }   
+};
+************************
+pr106. Construct Binary Tree from Inorder and Postorder Traversal, Medium
+
+Question:
+
+Given inorder and postorder traversal of a tree, construct the binary tree.
+
+Note:
+You may assume that duplicates do not exist in the tree.
+
+For example, given
+
+inorder = [9,3,15,20,7]
+postorder = [9,15,7,20,3]
+
+Return the following binary tree:
+
+    3
+   / \
+  9  20
+    /  \
+   15   7
+
+==
+Key: same way as pr 105. If inorder is "425 1 6837", and postorder is "452 8673 1", then we know 1 is root, 425 is left subtree and 6837 right subtree.
+
+==
+C++ code:
+
+class Solution {
+private:
+    TreeNode* buildSubTree(vector<int>& inorder, int in_begin, int in_end, vector<int>& postorder, int post_begin, int post_end, unordered_map<int, int>& map) {
+        int size = in_end - in_begin + 1;
+        if(size == 0) return NULL;
+        
+        int root_val = postorder[post_end];
+        TreeNode* root = new TreeNode(root_val);
+        
+        if(size == 1) return root;
+        
+        int root_idx = map[root_val];
+        int left_size = root_idx - in_begin;
+        int right_size = in_end - root_idx;
+        
+        root->left = buildSubTree(inorder, in_begin, root_idx - 1, postorder, post_begin, post_begin + left_size - 1, map);
+        root->right = buildSubTree(inorder, root_idx + 1, in_end, postorder, post_begin + left_size, post_end - 1, map);
+        
+        return root;
+    }
+    
+public:
+    TreeNode* buildTree(vector<int>& inorder, vector<int>& postorder) {
+        unordered_map<int, int> map;
+        int size = inorder.size();
+        for(int i = 0; i < size; ++i) map[inorder[i]] = i;
+        return buildSubTree(inorder, 0, size - 1, postorder, 0, size - 1, map);
+    }
+};
+
+************************
+pr222. Count Complete Tree Nodes, Medium 
+
+Question:
+
+Given a complete binary tree, count the number of nodes.
+
+Note:
+
+Definition of a complete binary tree from Wikipedia:
+
+In a complete binary tree every level, except possibly the last, is completely filled, and all nodes in the last level are as far left as possible. It can have between 1 and 2^h nodes inclusive at the last level h.
+
+Example:
+
+Input: 
+    1
+   / \
+  2   3
+ / \  /
+4  5 6
+
+Output: 6
+
+==
+Key: For a node, find the heights to its leftmost child and rightmost child. If the heights are the same, it means this is a perfect tree and can return (2^heights - 1), otherwise can return number of nodes in left subtree and right subtree and plus 1, by recursively calling itself. 
+
+Note that to calculate 2^heights, do not use the power function because its result is double, use bit manipulation instead (borrowed this trick from William's Java code).
+
+==
+C++ code:
+
+class Solution {
+public:
+    int countNodes(TreeNode* root) {
+        if(!root) return 0;
+        int left_height = 0, right_height = 0;
+        TreeNode *left_cur = root, *right_cur = root;
+        
+        while(left_cur) {
+            left_cur = left_cur->left;
+            ++left_height;
+        }
+                        
+        while(right_cur) {
+            right_cur = right_cur->right;
+            ++right_height;
+        }
+        
+        return (left_height == right_height) ? ((1 << left_height) - 1) : (1 + countNodes(root->left) + countNodes(root->right));
+    }
+};
+
+=================================================
+catbst
+
+************************
+pr230. Kth Smallest Element in a BST, Medium 
+
+Question:
+
+Given a binary search tree, write a function kthSmallest to find the kth smallest element in it.
+
+Note: 
+You may assume k is always valid, 1 ≤ k ≤ BST's total elements.
+
+Example 1:
+
+Input: root = [3,1,4,null,2], k = 1
+   3
+  / \
+ 1   4
+  \
+   2
+Output: 1
+
+Example 2:
+
+Input: root = [5,3,6,2,4,null,null,1], k = 3
+       5
+      / \
+     3   6
+    / \
+   2   4
+  /
+ 1
+Output: 3
+
+Follow up:
+What if the BST is modified (insert/delete operations) often and you need to find the kth smallest frequently? How would you optimize the kthSmallest routine?
+
+==
+Key: Write a function to find the size of a tree recursively. Then do a binary search to find the k-th smallest node. Note that in the binary search, we only need to find the size of the left subtree of root, no need to find the size of the right subtree of the root.
+
+Note: this method looks preliminary and slow, especially finding the size of a subtree. But it actually looks OK, because this is what William's code is like, and my C++ code ran faster than 99.16% of C++ online submissions.
+
+==
+C++ code:
+
+class Solution {
+public:
+    int kthSmallest(TreeNode* root, int k) {
+     	if(!root) return 0;
+     	if(!root->left && !root->right) return root->val;
+
+     	int left_size = tree_size(root->left);
+
+     	if(k <= left_size) return kthSmallest(root->left, k);
+     	else if(k == left_size + 1) return root->val;
+     	else return kthSmallest(root->right, k - left_size - 1);
+    }
+
+private:
+	int tree_size(TreeNode* root) {
+		if(!root) return 0;
+		return tree_size(root->left) + tree_size(root->right) + 1;
+	}
+};
+
+Solution for the follow up in the question (from online, another solution from online also did the same):
+
+If we can change the BST node structure, We can add a new Integer to mark the number of element in the left sub-tree.
+when the node is not null.
+1. If k == node.leftNum + 1, return node
+2. if k > node.leftNum + 1, make k -= node.leftNum + 1, and then node = node.right
+3. otherwise, node = node.left
+
+The time complexity of algorithm above will be O(h), h is the height of the input tree. Tao: because h = O(log n),  and binary search's time complexity is also O(log n).
+
+************************
+pr235. Lowest Common Ancestor of a Binary Search Tree, Easy 
+
+Question:
+
+Given a binary search tree (BST), find the lowest common ancestor (LCA) of two given nodes in the BST.
+
+According to the definition of LCA on Wikipedia: “The lowest common ancestor is defined between two nodes p and q as the lowest node in T that has both p and q as descendants (where we allow a node to be a descendant of itself).”
+
+Given binary search tree:  root = [6,2,8,0,4,7,9,null,null,3,5]
+
+     6
+   /    \
+  2      8
+ / \    / \
+0   4  7   9
+   / \
+  3   5
+
+Example 1:
+
+Input: root = [6,2,8,0,4,7,9,null,null,3,5], p = 2, q = 8
+Output: 6
+Explanation: The LCA of nodes 2 and 8 is 6.
+Example 2:
+
+Input: root = [6,2,8,0,4,7,9,null,null,3,5], p = 2, q = 4
+Output: 2
+Explanation: The LCA of nodes 2 and 4 is 2, since a node can be a descendant of itself according to the LCA definition.
+ 
+Note:
+
+All of the nodes' values will be unique.
+p and q are different and both values will exist in the BST.
+
+==
+Key: 
+
+Method 1 (DFS): Use binary search. If p and q are both bigger than root, then call lowestCommonAncestor recursively on root->right; if p and q are both smaller than root, then call lowestCommonAncestor recursively on root->left; if root is between p and q, then return root (because the LCA is neither in root's left subtree, nor in root's right subtree, so it can only be root).
+
+Method 2 (BFS): traverse the tree in each layer, the first time we see a node with value between p and q, return this node.
+
+==
+C++ code:
+
+Method 1 (DFS): 
+
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        if(!root) return root;
+        if(p->val > q->val) return lowestCommonAncestor(root, q, p);
+
+        if(p->val > root->val && q->val > root->val) return lowestCommonAncestor(root->right, p, q);
+        else if(p->val < root->val && q->val < root->val) return lowestCommonAncestor(root->left, p, q);
+        else return root;
+    }
+};
+
+Method 2 (BFS): 
+
+class Solution {
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        if(!root) return root;
+        if(p->val > q->val) return lowestCommonAncestor(root, q, p);
+        
+        queue<TreeNode*> queue;
+        queue.push(root);
+        int cur_num = 1, next_num = 0;
+        
+        while(!queue.empty()) {
+            TreeNode* cur = queue.front();
+            queue.pop();
+            --cur_num;
+            
+            if(p->val <= cur->val && cur->val <= q->val) return cur;
+            
+            if(cur->left) {
+                queue.push(cur->left);
+                ++next_num;
+            }
+            
+            if(cur->right) {
+                queue.push(cur->right);
+                ++next_num;
+            }
+            
+            if(cur_num == 0) {
+                cur_num = next_num;
+                next_num = 0;
+            }
+        }
+        
+        return NULL;
+    }
+};
+
+************************
+pr236. Lowest Common Ancestor of a Binary Tree, Medium. 
+
+Question:
+
+Given a binary tree, find the lowest common ancestor (LCA) of two given nodes in the tree.
+
+According to the definition of LCA on Wikipedia: “The lowest common ancestor is defined between two nodes p and q as the lowest node in T that has both p and q as descendants (where we allow a node to be a descendant of itself).”
+
+Given the following binary tree:  root = [3,5,1,6,2,0,8,null,null,7,4]
+ 
+     3
+   /    \
+  5      1
+ / \    / \
+6   2  0   8
+   / \
+  7   4
+
+Example 1:
+
+Input: root = [3,5,1,6,2,0,8,null,null,7,4], p = 5, q = 1
+Output: 3
+Explanation: The LCA of nodes 5 and 1 is 3.
+Example 2:
+
+Input: root = [3,5,1,6,2,0,8,null,null,7,4], p = 5, q = 4
+Output: 5
+Explanation: The LCA of nodes 5 and 4 is 5, since a node can be a descendant of itself according to the LCA definition.
+ 
+Note:
+
+All of the nodes' values will be unique.
+p and q are different and both values will exist in the binary tree.
+
+Tao: Note that the question said: "find the lowest common ancestor (LCA) of two given nodes ** in ** the tree", which means that it will only test the cases when p and q are both in the tree of root. This has been confirmed in my earlier submissions.
+
+==
+Key: See my above note. This means that when writing function lowestCommonAncestor, we can extend its functionality to more cases, like either/both of p and q are not in the tree of root. Then we can call lowestCommonAncestor recursively to let it work correctly for the test cases. This is similar as the idea of analytic continuation (解析延拓). 
+
+So we write lowestCommonAncestor to make it has the following functionalities (invariables):
+
+- If neither p nor q are in the tree of root, return null.
+
+- If both p and q are in the tree of root, return the LCA.
+
+- If only one of p and q (either p or q) are in the tree of root, return the one that is the tree of root (ie, if p is in the tree return p, if q is in the tree return q).
+
+The above solution is from William (which is the same as the leetcode discussion solution).
+
+PS: my E4's code passed, but was very slow. It wrote anther function to determine whether a node is in the tree of root, which is much less efficiency as the above solution. 
+
+==
+C++ code:
+
+class Solution { 
+public:
+    TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+        if(!root || root == p || root == q) return root;
+        TreeNode* left = lowestCommonAncestor(root->left, p, q);
+        TreeNode* right = lowestCommonAncestor(root->right, p, q);
+        
+        if(left == NULL && right == NULL) return NULL;
+        else if(left != NULL && right == NULL) return left;
+        else if(left == NULL && right != NULL) return right;
+        else return root;
+    }
+};
+
+************************
+pr99. Recover Binary Search Tree, Hard
+
+Question:
+
+Two elements of a binary search tree (BST) are swapped by mistake.
+
+Recover the tree without changing its structure.
+
+Example 1:
+
+Input: [1,3,null,null,2]
+
+   1
+  /
+ 3
+  \
+   2
+
+Output: [3,1,null,null,2]
+
+   3
+  /
+ 1
+  \
+   2
+
+Example 2:
+
+Input: [3,1,4,null,null,2]
+
+  3
+ / \
+1   4
+   /
+  2
+
+Output: [2,1,4,null,null,3]
+
+  2
+ / \
+1   4
+   /
+  3
+
+Follow up:
+
+A solution using O(n) space is pretty straight forward.
+Could you devise a constant space solution?
+
+Tao: can also use recursion.
+
+Tao: Why the function returns nothing? Because a tree is defined by the connections between nodes, and the root of a tree can be known from the connections.
+
+==
+Key:
+
+1234 
+1324
+ --
+
+123456
+153426
+ -  -
+
+==
+C++ code:
+
+Function signature:
+
+class Solution {
+public:
+    void recoverTree(TreeNode* root) {
+        
+    }
+};
+
+=================================================
+cattrie
+
+************************
+pr208. Implement Trie (Prefix Tree), Medium 
+
+Question:
+
+Implement a trie with insert, search, and startsWith methods.
+
+Example:
+
+Trie trie = new Trie();
+
+trie.insert("apple");
+trie.search("apple");   // returns true
+trie.search("app");     // returns false
+trie.startsWith("app"); // returns true
+trie.insert("app");   
+trie.search("app");     // returns true
+
+Note:
+- You may assume that all inputs are consist of lowercase letters a-z.
+- All inputs are guaranteed to be non-empty strings.
+
+==
+Key: 
+
+Let the trie Node class have the following members:
+
+char label; //Value of the character in this node
+bool end_of_word; //Whether this node is the end of a word
+Node* next[26]; //Child nodes
+
+Write two helper functions:
+
+void insert_at_node(Node* node, string word): insert word in a subtrie whose root is node. Recursively call itself.
+
+Node* get_last(Node* node, string prefix): get the node which corresponds to the last character in prefix. If prefix does not exist in the trie, then return null. Recursively call itself.
+
+==
+The following is an example of a trie, which contains the word "cbd":
+
+                                 root
+                                  |
+ ------------------------------------------------------------------
+ |     |                          |                               |
+null  null                        c                              null
+                                  |
+              -------------------------------------------
+              |              |                   |      |  
+             null            b                  null   null
+                             |
+                 ----------------------
+                 |     |     |    |   |      
+                null  null  null  d  null
+
+
+Tao's conclusion about trie:
+
+1. The root does not have a character.
+2. Every node has 26 children. If a character exists, this child node is not null. Otherwise this child node is null.
+
+==
+C++ code:
+
+The code in leetcode discussion is simpler than tao's code below, but tao's code is easier to understand and remember.
+
+#include <string>
+#include <cstring> //This is to use memset below
+#include <iostream>
+using namespace std;
+
+class Node {
+public:
+    char label;
+    bool end_of_word;
+    Node* next[26];
+    
+    Node() = default;
+    Node(char label_): label(label_), end_of_word(false) {memset(next, 0, sizeof(next));} //Have to use memset, otherwise LeetCode online judge reports error.
+};
+
+class Trie {
+private:
+    Node* root;
+
+    void insert_at_node(Node* node, string word) {
+        if(word.size() == 0) {
+            node->end_of_word = true;
+            return;
+        }
+
+        char label = word[0];
+        int index = label - 'a';
+        if(!node->next[index]) node->next[index] = new Node(label); 
+        insert_at_node(node->next[index], word.substr(1, word.size() - 1));
+    }
+
+    Node* get_last(Node* node, string prefix) {
+        if(prefix.size() == 0) return node;
+
+        char label = prefix[0];
+        int index = label - 'a';
+        Node* child = node->next[index];
+        if(!child || child->label != label) return NULL;
+
+        return get_last(child, prefix.substr(1, prefix.size() - 1));        
+    }
+
+public:   
+    Trie() {
+        root = new Node('#');
+    }
+    
+    void insert(string word) {
+        insert_at_node(root, word);
+    }
+    
+    bool search(string word) {
+        Node* last = get_last(root, word);
+        return last && last->end_of_word;
+    }
+    
+    bool startsWith(string prefix) {
+        return get_last(root, prefix);
+    }
+};
+
+=================================================
+catgraph
+
+************************
+pr133. Clone Graph, Medium.
+
+Question:
+
+Given the head of a graph, return a deep copy (clone) of the graph. Each node in the graph contains a label (int) and a list (List[UndirectedGraphNode]) of its neighbors. There is an edge between the given node and each of the nodes in its neighbors.
+
+Tao: from leetcode discussion, many people say that the question is actually a directed graph.
+
+==
+Key: Both BFS and DFS use a map to save the mapping from the original node and its copy.
+
+==
+C++ code:
+
+BFS 
+(tao's code simplied according to leetcode discussion):
+
+class Solution {
+private:
+    unordered_map<UndirectedGraphNode*, UndirectedGraphNode*> node_map;
+
+public:
+    UndirectedGraphNode *cloneGraph(UndirectedGraphNode *node) {
+        if(!node) return node;
+        
+        queue<UndirectedGraphNode*> q;
+        q.push(node);
+
+        UndirectedGraphNode* node_copy = new UndirectedGraphNode(node->label);
+        node_map[node] = node_copy;
+
+        while(!q.empty()) {
+            UndirectedGraphNode* front = q.front();
+            q.pop();
+            
+            UndirectedGraphNode* front_copy = node_map[front];
+
+            for(UndirectedGraphNode* nb: front->neighbors) {
+                if(node_map.find(nb) == node_map.end()) {
+                    UndirectedGraphNode* nb_copy = new UndirectedGraphNode(nb->label);
+                    node_map[nb] = nb_copy;    
+                    q.push(nb);              
+                } 
+
+                front_copy->neighbors.push_back(node_map[nb]);
+            }
+
+        }
+
+        return node_copy;
+    }
+};
+
+--
+DFS:
+
+class Solution {
+private:
+    unordered_map<UndirectedGraphNode*, UndirectedGraphNode*> node_map;
+
+public:
+    UndirectedGraphNode *cloneGraph(UndirectedGraphNode *node) {
+        if(!node) return node;
+        UndirectedGraphNode* node_copy = new UndirectedGraphNode(node->label);
+        node_map[node] = node_copy;
+                
+        for(UndirectedGraphNode* nb: node->neighbors) {
+
+            if(node_map.find(nb) == node_map.end()) {
+                UndirectedGraphNode* nb_copy = cloneGraph(nb);
+                node_map[nb] = nb_copy;
+                node_copy->neighbors.push_back(nb_copy);
+            } else {
+                node_copy->neighbors.push_back(node_map[nb]);
+            }
+            
+        }
+
+        return node_copy;
+    }
+};
+
+************************
+pr127. Word Ladder, Medium
+
+Question:
+
+Given two words (beginWord and endWord), and a dictionary's word list, find the length of shortest transformation sequence from beginWord to endWord, such that:
+
+Only one letter can be changed at a time.
+Each transformed word must exist in the word list. Note that beginWord is not a transformed word.
+Note:
+
+Return 0 if there is no such transformation sequence.
+All words have the same length.
+All words contain only lowercase alphabetic characters.
+You may assume no duplicates in the word list.
+You may assume beginWord and endWord are non-empty and are not the same.
+
+Example 1:
+
+Input:
+beginWord = "hit",
+endWord = "cog",
+wordList = ["hot","dot","dog","lot","log","cog"]
+
+Output: 5
+
+Explanation: As one shortest transformation is "hit" -> "hot" -> "dot" -> "dog" -> "cog",
+return its length 5.
+
+Example 2:
+
+Input:
+beginWord = "hit"
+endWord = "cog"
+wordList = ["hot","dot","dog","lot","log"]
+
+Output: 0
+
+Explanation: The endWord "cog" is not in wordList, therefore no possible transformation.
+
+Tao: in Leetcode OJ, the input wordList is type vector<string>&, but in all the C++ code in Leetcode Discussion, the type is unordered_set<string>&. So I guess Leetcode OJ changed its function parameter recently. At first I used vector<string>& directly and it exceeded time limit (also runs very slow in my local computer), then I explicitly converted vector<string>& to unordered_set<string>&, then it passed (and runs much faster in my local computer).
+
+==
+Key: BFS. This is a graph problem. The graph of the above Example 1 is as below. Just use ordinary BFS. When it reaches the destination node (endWord), return the level number. 
+
+     hit         1
+      |
+     hot         2
+    /    \
+  dot -- lot     3
+  /        \
+dog ------ log   4
+  \        /
+     cog         5
+
+==
+C++ code:
+
+class Solution {
+private:
+    unordered_map<string, vector<string>> next_map;
+    
+    // Gets all the neighboring nodes of s in the graph
+    vector<string> get_next(string s, unordered_set<string>& wordList) {
+        if(next_map.find(s) != next_map.end()) return next_map[s];
+        
+        vector<string> res;
+            
+        for(int i = 0; i < s.size(); ++i) {
+            char cur_char = s[i];
+            for(char c = 'a'; c <= 'z'; ++c) {
+                s[i] = c;
+                if(c != cur_char && wordList.find(s) != wordList.end()) res.push_back(s);
+            }
+            s[i] = cur_char;
+        }
+        
+        next_map[s] = res;
+        
+        return res;
+    }
+    
+public:
+    int ladderLength(string beginWord, string endWord, vector<string>& wordList) {
+        if(wordList.size() == 0) return 0;
+        queue<string> q;
+        unordered_set<string> visited;
+        unordered_set<string> word_list_set;
+
+        for(string word: wordList) word_list_set.insert(word);
+        
+        q.push(beginWord);
+        visited.insert(beginWord);
+        
+        int cur_num = 1, next_num = 0, level = 0;
+        
+        while(!q.empty()) {
+            string cur = q.front();
+            q.pop();
+            --cur_num;
+                        
+            if(cur == endWord) return (level + 1);
+            
+            vector<string> next_vec = get_next(cur, word_list_set);
+                   
+            if(next_vec.size() == 0) return 0;
+            
+            for(string next: next_vec) {
+                if(visited.find(next) == visited.end()) {
+                    q.push(next);
+                    visited.insert(next);                   
+                    ++next_num;
+                }
+            }
+                  
+           if(cur_num == 0) {
+                cur_num = next_num;
+                next_num = 0;
+                ++level;
+            }
+        }
+        
+        return 0;
+    }
+};
+
+************************
+pr126. Word Ladder II, Hard
+
+Question:
+
+Given two words (beginWord and endWord), and a dictionary's word list, find all shortest transformation sequence(s) from beginWord to endWord, such that:
+
+1. Only one letter can be changed at a time
+2. Each transformed word must exist in the word list. Note that beginWord is not a transformed word.
+
+Note:
+
+- Return an empty list if there is no such transformation sequence.
+- All words have the same length.
+- All words contain only lowercase alphabetic characters.
+- You may assume no duplicates in the word list.
+-You may assume beginWord and endWord are non-empty and are not the same.
+
+Example 1:
+
+Input:
+beginWord = "hit",
+endWord = "cog",
+wordList = ["hot","dot","dog","lot","log","cog"]
+
+Output:
+[
+  ["hit","hot","dot","dog","cog"],
+  ["hit","hot","lot","log","cog"]
+]
+
+Example 2:
+
+Input:
+beginWord = "hit"
+endWord = "cog"
+wordList = ["hot","dot","dog","lot","log"]
+
+Output: []
+
+Explanation: The endWord "cog" is not in wordList, therefore no possible transformation.
+
+==
+Key: BFS + DFS. First use BFS to get all the layers of the graph and store them in a vector. Then use DFS to get the path: for current word, find the path of each of its children, then add current word to the front of each such paths. Before calling function recursively, save the already calcaluated values in a map to reduce computation.
+
+==
+C++ code:
+
+class Solution {
+private:
+    unordered_map<string, vector<string>> next_map;
+    unordered_set<string> word_list_set;
+    unordered_map<string, vector<vector<string>>> ladders_for_cur_word_map;//Store temporary results before recursive call
+    
+    // Gets all the neighboring nodes of s in the graph
+    vector<string> get_next(string s) {
+        if(next_map.find(s) != next_map.end()) return next_map[s];
+        
+        vector<string> res;
+            
+        for(int i = 0; i < s.size(); ++i) {
+            char cur_char = s[i];
+            for(char c = 'a'; c <= 'z'; ++c) {
+                s[i] = c;
+                if(c != cur_char && word_list_set.find(s) != word_list_set.end()) res.push_back(s);
+            }
+            s[i] = cur_char;
+        }
+        
+        next_map[s] = res;
+        
+        return res;
+    }
+
+public:    
+    vector<vector<string>> findLevels(string beginWord, string endWord) {
+        vector<vector<string>> res;
+        queue<string> q;
+        unordered_set<string> visited;       
+        vector<string> level;
+        
+        q.push(beginWord);
+        visited.insert(beginWord);
+        
+        int cur_num = 1, next_num = 0, level_num = 0;
+        
+        while(!q.empty()) {
+            string cur = q.front();
+            q.pop();
+            level.push_back(cur);
+            --cur_num;
+            
+            vector<string> next_vec = get_next(cur);
+                   
+            if(next_vec.size() == 0) return res;
+            
+            for(string next: next_vec) {
+                if(visited.find(next) == visited.end()) {
+                    q.push(next);
+                    visited.insert(next);                   
+                    ++next_num;
+                }
+            }
+                  
+           if(cur_num == 0) {
+                cur_num = next_num;
+                next_num = 0;
+                res.push_back(level);
+                level.clear();
+                ++level_num;
+            }
+        }
+        
+        return res;    
+    }
+
+    vector<vector<string>> findLaddersForCurWord(string curWord, string endWord, vector<vector<string>>& levels, int cur_level_idx) {
+        if(ladders_for_cur_word_map.find(curWord) != ladders_for_cur_word_map.end()) return ladders_for_cur_word_map[curWord];
+        vector<vector<string>> res;
+        
+        if(curWord == endWord) {
+            vector<string> item = {endWord};
+            res.push_back(item);
+            return res;
+        }
+
+        vector<string> next_level;
+        
+        if(cur_level_idx + 1 < levels.size()) 
+            next_level = levels[cur_level_idx + 1];
+                
+        vector<string> children = get_next(curWord); 
+        
+        for(string next: next_level) {
+            if(find(children.begin(), children.end(), next) != children.end()) {
+                                
+                vector<vector<string>> ladders_for_cur_word;
+                
+                if(ladders_for_cur_word_map.find(next) != ladders_for_cur_word_map.end()) 
+                    //Result already stored in map, fetch it from map:
+                    ladders_for_cur_word =  ladders_for_cur_word_map[next];
+                else 
+                    //Result not stored in map, calculate it:
+                    ladders_for_cur_word = findLaddersForCurWord(next, endWord, levels, cur_level_idx + 1);
+
+                for(vector<string> ladder: ladders_for_cur_word) {
+                    vector<string> item = ladder;
+                    item.insert(item.begin(), curWord);//vector has no push_front() function
+                    res.push_back(item);
+                }
+            }
+
+        }
+        
+        ladders_for_cur_word_map[curWord] = res;
+        
+        return res;
+    }
+
+
+    vector<vector<string>> findLadders(string beginWord, string endWord, vector<string>& wordList) {
+        vector<vector<string>> res;
+        if(wordList.size() == 0) return res;
+    
+        for(string word: wordList) word_list_set.insert(word);
+        
+        vector<vector<string>> levels = findLevels(beginWord, endWord);        
+        
+        res = findLaddersForCurWord(beginWord, endWord, levels, 0);
+
+        return res;
+    }
+};
+
+=================================================
+catstring
+
+************************
+pr8. String to Integer (atoi), Easy 
+
+Question:
+
+Implement atoi which converts a string to an integer.
+
+The function first discards as many whitespace characters as necessary until the first non-whitespace character is found. Then, starting from this character, takes an optional initial plus or minus sign followed by as many numerical digits as possible, and interprets them as a numerical value.
+
+The string can contain additional characters after those that form the integral number, which are ignored and have no effect on the behavior of this function.
+
+If the first sequence of non-whitespace characters in str is not a valid integral number, or if no such sequence exists because either str is empty or it contains only whitespace characters, no conversion is performed.
+
+If no valid conversion could be performed, a zero value is returned.
+
+Note:
+
+Only the space character ' ' is considered as whitespace character.
+Assume we are dealing with an environment which could only store integers within the 32-bit signed integer range: [−2^31,  2^31 − 1]. If the numerical value is out of the range of representable values, INT_MAX (2^31 − 1) or INT_MIN (−2^31) is returned.
+
+Example 1:
+
+Input: "42"
+Output: 42
+
+Example 2:
+
+Input: "   -42"
+Output: -42
+Explanation: The first non-whitespace character is '-', which is the minus sign.
+             Then take as many numerical digits as possible, which gets 42.
+
+Example 3:
+
+Input: "4193 with words"
+Output: 4193
+Explanation: Conversion stops at digit '3' as the next character is not a numerical digit.
+
+Example 4:
+
+Input: "words and 987"
+Output: 0
+Explanation: The first non-whitespace character is 'w', which is not a numerical 
+             digit or a +/- sign. Therefore no valid conversion could be performed.
+Example 5:
+
+Input: "-91283472332"
+Output: -2147483648
+Explanation: The number "-91283472332" is out of the range of a 32-bit signed integer.
+             Thefore INT_MIN (−231) is returned.
+
+==
+Key: Just remember the corner cases: 
+"+1": positive sign
+"-000000000000001": leading 0
+overflow.
+
+Remember: Tao once proved that "value * 10 + d > 2147483647" is equivalent to "value > (2147483647 - d) / 10)". Do not waste time to prove it again, just remember it.
+
+==
+C++ code:
+(Tao's code simplified according to Tao's earlier Java code):
+
+#include<iostream>
+#include<vector>
+#include<string>
+#include<climits> //Include this for INT_MAX, INT_MIN
+using namespace std;
+
+class Solution {
+public:
+    int myAtoi(string str) {
+        if(str.size() == 0) return 0;
+
+        //trim
+        str.erase(0, str.find_first_not_of(' '));
+        str.erase(str.find_last_not_of(' ') + 1);
+
+        int sign = 1, res = 0;
+
+        if(str[0] == '-' || str[0] == '+') {
+            if(str[0] == '-') sign = -1;
+            str.erase(0, 1);
+        }
+
+        if(!isdigit(str[0])) return 0;
+
+        //Remove leading 0
+        while(str[0] == '0') str.erase(0, 1);
+
+        for(char c: str) {
+            if(!isdigit(c)) break;
+            int digit = c - '0';
+
+            //The following is from res * 10 + digit > INT_MAX
+            if(sign > 0 && res > (INT_MAX - digit) / 10) return INT_MAX;
+
+            //The following is from res * 10 + digit > -INT_MIN
+            //Note it can not be written as res > (-INT_MIN - digit) / 10, 
+            //because -INT_MIN is 1 bigger than INT_MAX, so -INT_MIN overflows,
+            //so we need to multiply both sides by -1 to avoid writting -INT_MIN: 
+            //-res < (INT_MIN + digit) / 10 
+
+            if(sign < 0 && -res < (INT_MIN + digit) / 10) return INT_MIN;
+
+            res = res * 10 + digit;
+        }
+
+        return sign * res;
+    }
+};
+
+************************
+pr14. Longest Common Prefix, Easy 
+
+Question:
+
+Write a function to find the longest common prefix string amongst an array of strings.
+
+If there is no common prefix, return an empty string "".
+
+Example 1:
+
+Input: ["flower","flow","flight"]
+Output: "fl"
+
+Example 2:
+
+Input: ["dog","racecar","car"]
+Output: ""
+Explanation: There is no common prefix among the input strings.
+
+Note:
+
+All given inputs are in lowercase letters a-z.
+
+==
+Key: Easy. Just use brute force. Write a function int getPrefixSize(string& s1, string& s2), which returns the length of prefix of s1 and s2. In the main function, call getPrefixSize on each of the adjacent two strings in strs. Finally get the shortest length of prefix.
+
+==
+C++ code (simplied according to my Java code):
+
+class Solution {
+private:
+	int getPrefixSize(string& s1, string& s2) {
+		int n1 = s1.size(), n2 = s2.size();
+		if(n1 == 0 || n2 == 0) return 0;
+
+		if(n1 > n2) return getPrefixSize(s2, s1);
+
+		int i = 0;
+
+		while(i < n1) {
+			if(s1[i] != s2[i]) break;
+			++i;
+		}
+
+		return i;
+	}
+
+public:
+    string longestCommonPrefix(vector<string>& strs) {
+        int n = strs.size();
+        if(n == 0) return "";
+        if(n == 1) return strs[0];
+
+        int minPrefix = INT_MAX;
+
+        for(int i = 0; i < n - 1; ++i) {
+        	minPrefix = min(getPrefixSize(strs[i], strs[i + 1]), minPrefix);
+        }
+
+        return strs[0].substr(0, minPrefix);
+    }
+};
+
+************************
+pr38. Count and Say, Easy 
+
+Question:
+
+The count-and-say sequence is the sequence of integers with the first five terms as following:
+
+1.     1
+2.     11
+3.     21
+4.     1211
+5.     111221
+
+1 is read off as "one 1" or 11.
+11 is read off as "two 1s" or 21.
+21 is read off as "one 2, then one 1" or 1211.
+
+Given an integer n where 1 ≤ n ≤ 30, generate the nth term of the count-and-say sequence.
+
+Note: Each term of the sequence of integers will be represented as a string.
+
+Example 1:
+
+Input: 1
+Output: "1"
+
+Example 2:
+
+Input: 4
+Output: "1211"
+
+==
+Key: Brute force. Write a function string getNext(string s), which returns the next string. Eg: getNext(21) returns 1211. Then call getNext for n times.
+
+==
+C++ code:
+
+class Solution {
+public:
+	string getNext(string s) {
+		int n = s.size();
+		string res = "";
+
+		for(int i = 0; i < n; ++i) {
+			if(i == 0 || s[i] != s[i - 1]) {
+				int count = 1;
+				while(i + 1 < n && s[i] == s[i + 1]) {++i; ++count;}
+				res += (to_string(count) + s[i]);
+			}
+		}
+
+		return res;
+	}
+
+    string countAndSay(int n) {
+    	string res = "1";
+    	for(int i = 1; i < n; ++i) res = getNext(res);
+    	return res; 
+    }
+};
+
+************************
+pr28. Implement strStr(), Easy
+
+Question:
+
+Implement strStr().
+
+Return the index of the first occurrence of needle in haystack, or -1 if needle is not part of haystack.
+
+Example 1:
+
+Input: haystack = "hello", needle = "ll"
+Output: 2
+
+Example 2:
+
+Input: haystack = "aaaaa", needle = "bba"
+Output: -1
+
+Clarification:
+
+What should we return when needle is an empty string? This is a great question to ask during an interview.
+
+For the purpose of this problem, we will return 0 when needle is an empty string. This is consistent to C's strstr() and Java's indexOf().
+
+Tao: needle可能比haystack長, ("", "aa") -> -1.
+
+==
+Key: Brute forece. First compare each character of haystack with needle[0]. If they are equal, then compare all characters in them.
+
+==
+C++ code:
+
+class Solution {
+public:
+    int strStr(string haystack, string needle) {
+        int n = needle.size(), m = haystack.size();
+
+    	if(n == 0) return 0;
+    	if(n > m) return -1;
+
+    	int start_equal = 0; // start_equal is the index of haystack
+        
+        while(start_equal < m){
+            // Find the matching start in haystack
+            while(start_equal < m - n && haystack[start_equal] != needle[0]) {++start_equal;}
+
+            if(start_equal > m - n) return -1;
+
+            // Check the entire string needle
+            int i = start_equal, j = 0;
+            while(i < m && j < n && haystack[i] == needle[j]) {++i; ++j;}
+
+            if(j == n) return start_equal;  
+            else ++start_equal; 
+        }
+
+		return -1;  
+    }
+};
+
+==
+Python code:
+
+class Solution:
+    def strStr(self, haystack: str, needle: str) -> int:
+    	n = len(needle)
+    	m = len(haystack)
+
+    	if n == 0:
+    		return 0
+
+    	if n > m:
+    		return -1
+
+    	start_equal = 0
+
+    	while start_equal < m:
+    		while start_equal < m - n and haystack[start_equal] != needle[0]: 
+    			start_equal += 1
+
+    		if start_equal > m - n:
+    			return -1
+
+    		i = start_equal
+    		j = 0
+
+    		while i < m and j < n and haystack[i] == needle[j]:
+    			i += 1
+    			j += 1
+
+    		if j == n:
+    			return start_equal
+    		else: 
+    			start_equal += 1
+
+    	return -1
+
+************************
+pr242. Valid Anagram, Easy. 
+
+Question:
+
+Given two strings s and t , write a function to determine if t is an anagram of s.
+
+Example 1:
+
+Input: s = "anagram", t = "nagaram"
+Output: true
+Example 2:
+
+Input: s = "rat", t = "car"
+Output: false
+
+Note:
+You may assume the string contains only lowercase alphabets.
+
+Follow up:
+What if the inputs contain unicode characters? How would you adapt your solution to such case?
+
+Tao: Anagram: 單詞裡的字母只是改變了排列順序。
+
+==
+Key: Use map. Key is the character, value is the frequency of this character. If the maps of the two words are the same, then they are anagram. The way to do this is to build a map from s, then visit each character in t and delete the character from map. Finally check whether the map is empty.
+
+==
+C++ code:
+
+class Solution {
+public:
+    bool isAnagram(string s, string t) {
+        if(s.size() == 0 && t.size() == 0) return true;
+        if(s.size() == 0 || t.size() == 0) return false;
+        
+        unordered_map<char, int> map;
+        
+        for(char c: s) {
+            if(map.find(c) == map.end()) map[c] = 1;
+            else ++map[c];
+        }
+        
+        for(char c: t) {
+            if(map.find(c) == map.end()) return false;
+            else if(map[c] > 1) --map[c];
+            else map.erase(c);
+        }
+        
+        return map.empty();
+    }
+};
+
+************************
+pr49. Group Anagrams, Medium.
+
+Question:
+
+Given an array of strings, group anagrams together.
+
+Example:
+
+Input: ["eat", "tea", "tan", "ate", "nat", "bat"],
+Output:
+[
+  ["ate","eat","tea"],
+  ["nat","tan"],
+  ["bat"]
+]
+
+Note:
+
+All inputs will be in lowercase.
+The order of your output does not matter.
+
+==
+Key: Use a map: unordered_map<string, vector<string>>. For each string in the input, sort it as use it as the key. Put all of its anagrams under this key.
+
+==
+C++ code:
+
+class Solution {
+public:
+    vector<vector<string>> groupAnagrams(vector<string>& strs) {
+        vector<vector<string>> res;
+        if(strs.empty()) return res;
+        unordered_map<string, vector<string>> map;
+        
+        for(string s: strs) {
+            string s_sorted = s;
+            sort(s_sorted.begin(), s_sorted.end());
+            (map[s_sorted]).push_back(s);
+        }
+        
+        for(unordered_map<string, vector<string>>::iterator it = map.begin(); it != map.end(); ++it) {
+            res.push_back(it->second);
+        }
+        
+        return res;
+    }
+};
+
+************************
+pr68. Text Justification, Hard.
+
+Question:
+
+Given an array of words and a width maxWidth, format the text such that each line has exactly maxWidth characters and is fully (left and right) justified.
+
+You should pack your words in a greedy approach; that is, pack as many words as you can in each line. Pad extra spaces ' ' when necessary so that each line has exactly maxWidth characters.
+
+Extra spaces between words should be distributed as evenly as possible. If the number of spaces on a line do not divide evenly between words, the empty slots on the left will be assigned more spaces than the slots on the right.
+
+For the last line of text, it should be left justified and no extra space is inserted between words.
+
+Note:
+
+- A word is defined as a character sequence consisting of non-space characters only.
+
+- Each word's length is guaranteed to be greater than 0 and not exceed maxWidth.
+
+- The input array words contains at least one word.
+
+Example 1:
+
+Input:
+words = ["This", "is", "an", "example", "of", "text", "justification."]
+maxWidth = 16
+
+Output:
+[
+   "This    is    an",
+   "example  of text",
+   "justification.  "
+]
+
+Example 2:
+
+Input:
+words = ["What","must","be","acknowledgment","shall","be"]
+maxWidth = 16
+
+Output:
+[
+  "What   must   be",
+  "acknowledgment  ",
+  "shall be        "
+]
+
+Explanation: Note that the last line is "shall be    " instead of "shall     be", because the last line must be left-justified instead of fully-justified. Note that the second line is also left-justified becase it contains only one word.
+
+Example 3:
+
+Input:
+words = ["Science","is","what","we","understand","well","enough","to","explain",
+         "to","a","computer.","Art","is","everything","else","we","do"]
+maxWidth = 20
+
+Output:
+[
+  "Science  is  what we",
+  "understand      well",
+  "enough to explain to",
+  "a  computer.  Art is",
+  "everything  else  we",
+  "do                  "
+]
+
+Tao: [""], 0 -> [""]. [""], 2 -> ["  "]
+
+==
+Key:
+
+==
+C++ code:
+
+************************
+pr71. Simplify Path, Medium.
+
+Question:
+
+Given an absolute path for a file (Unix-style), simplify it. Or in other words, convert it to the canonical path.
+
+In a UNIX-style file system, a period . refers to the current directory. Furthermore, a double period .. moves the directory up a level.
+
+Note that the returned canonical path must always begin with a slash /, and there must be only a single slash / between two directory names. The last directory name (if it exists) must not end with a trailing /. Also, the canonical path must be the shortest string representing the absolute path.
+
+Example 1:
+
+Input: "/home/"
+Output: "/home"
+Explanation: Note that there is no trailing slash after the last directory name.
+
+Example 2:
+
+Input: "/../"
+Output: "/"
+Explanation: Going one level up from the root directory is a no-op, as the root level is the highest level you can go.
+
+Example 3:
+
+Input: "/home//foo/"
+Output: "/home/foo"
+Explanation: In the canonical path, multiple consecutive slashes are replaced by a single one.
+
+Example 4:
+
+Input: "/a/./b/../../c/"
+Output: "/c"
+
+Example 5:
+
+Input: "/a/../../b/../c//.//"
+Output: "/c"
+
+Example 6:
+
+Input: "/a//b////c/d//././/.."
+Output: "/a/b/c"
+
+==
+Key: First split the string. Then use a stack. For each segment in the split: 
+If it is a normal word, push it to the stack. 
+If it is "..", pop from the stack. 
+If it is "." or empty string, do nothing.
+Finally combine the strings in the stack.
+
+==
+C++ code:
+
+class Solution {
+private:
+    vector<string> split(const string& s, char delim) {
+        stringstream ss(s);
+        string item;
+        vector<string> res;
+        while(getline(ss, item, delim)) {
+            res.push_back(item);
+        }
+        return res;
+    }
+    
+    string& ltrim(string& s, const string& chars = "\t\n ") {
+        s.erase(0, s.find_first_not_of(chars));
+        return s;
+    }
+    
+    string& rtrim(string& s, const string& chars = "\t\n ") {
+        s.erase(s.find_last_not_of(chars) + 1);
+        return s;
+    }
+    
+    string& trim(string& s, const string& chars = "\t\n ") {
+        return ltrim(rtrim(s, chars), chars);
+    }
+    
+public:
+    string simplifyPath(string path) {
+        vector<string> path_split = split(trim(path), '/');
+        stack<string> stack;
+        
+        for(string s: path_split) {
+            if(s.empty() || s == ".") continue;
+            else if(s == ".." && stack.empty()) continue;
+            else if(s == ".." && !stack.empty()) stack.pop();
+            else stack.push(s);
+        }
+        
+        string res = "";
+        
+        while(!stack.empty()) {
+            string s = stack.top();
+            stack.pop();
+            res.insert(0, s);
+            res.insert(0, "/");
+        }
+                
+        return res.empty()? "/" : res;
+    }
+};
+
+************************
+pr43. Multiply Strings, Medium. 
+
+Question:
+
+Given two non-negative integers num1 and num2 represented as strings, return the product of num1 and num2, also represented as a string.
+
+Example 1:
+
+Input: num1 = "2", num2 = "3"
+Output: "6"
+
+Example 2:
+
+Input: num1 = "123", num2 = "456"
+Output: "56088"
+
+Note:
+
+1. The length of both num1 and num2 is < 110. Tao: note that this is the "length" of num1 and num2, not their values.
+
+2. Both num1 and num2 contain only digits 0-9.
+
+3. Both num1 and num2 do not contain any leading zero, except the number 0 itself.
+
+4. You must not use any built-in BigInteger library or convert the inputs to integer directly.
+
+==
+Key: The challenge of this problem is overflow. In order to ensure no overflow, do everything on strings. Write two functions:
+
+string multiplyOneDigit(string num1, char c2), which multiplies a number and a digit.
+
+string add(string num1, string num2), which adds two string numbers.
+
+Tao's solution below may look more cumbersome than some other solutions, but the advantage of it is that it does everything at string level, so there is no risk of overflow.
+
+==
+C++ code:
+
+class Solution {
+private:
+    vector<string> int_to_string = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
+
+    string multiplyOneDigit(string num1, char c2) {
+        int d2 = c2 - '0';
+        int carry = 0;
+        string res = "";
+        
+        for(int i = num1.size() - 1; i >= 0; --i) {
+            int d1 = num1[i] - '0';
+            
+            int temp = d1 * d2 + carry;
+            carry = temp / 10;
+            int current_digit = temp % 10;
+            
+            res.insert(0, int_to_string[current_digit]);
+        }
+        
+        if(carry > 0) res.insert(0, int_to_string[carry]);
+                        
+        return res;
+    }
+    
+    string add(string num1, string num2) {
+        int size1 = num1.size();
+        int size2 = num2.size();
+        if(size1 < size2) return add(num2, num1);
+        
+        int carry = 0;
+        string res = "";
+        
+        for(int i1 = size1 - 1; i1 >= 0; --i1) {
+            int d1 = num1[i1] - '0';
+            int i2 = i1 - (size1 - size2);
+            int d2 = i2 >= 0 ? (num2[i2] - '0') : 0;
+            
+            int temp = d1 + d2 + carry;
+            carry = temp / 10;
+            int current_digit = temp % 10;
+            
+            res.insert(0, int_to_string[current_digit]);
+        }
+        
+        if(carry > 0) res.insert(0, int_to_string[carry]);
+                
+        return res;
+    }
+    
+public:
+    string multiply(string num1, string num2) {
+        if(num1 == "0" || num2 == "0") return "0";
+        string res = "";
+        
+        for(char c2: num2) {
+            string resTimes10 = res + "0";
+            res = add(resTimes10, multiplyOneDigit(num1, c2));
+        }
+        
+        return res;
+    }
+};
+
+************************
+pr6. ZigZag Conversion, Easy 
+
+Question:
+
+The string "PAYPALISHIRING" is written in a zigzag pattern on a given number of rows like this: (you may want to display this pattern in a fixed font for better legibility)
+
+P   A   H   N
+A P L S I I G
+Y   I   R
+
+And then read line by line: "PAHNAPLSIIGYIR"
+
+Write the code that will take a string and make this conversion given a number of rows:
+
+string convert(string s, int numRows);
+
+Example 1:
+Input: s = "PAYPALISHIRING", numRows = 3
+Output: "PAHNAPLSIIGYIR"
+
+Example 2:
+Input: s = "PAYPALISHIRING", numRows = 4
+Output: "PINALSIGYAHRPI"
+
+Explanation:
+
+P     I    N
+A   L S  I G
+Y A   H R
+P     I
+
+==
+Key: First figure out the gap between letters in two columns, then figure out the letters between columns. I will be able to figure out the formulae on the fly.
+
+==
+C++ code:
+
+class Solution {
+public:
+    string convert(string s, int numRows) {
+        int size = s.size();
+        if(size <= numRows || numRows <= 1) return s;
+        string res = "";        
+        int gap = 2 * numRows - 2;
+        
+        for(int i = 0; i < numRows; ++i) {
+            for(int j = 0; i + j * gap < size; ++j) {
+                res += s[i + j * gap];
+                if(i > 0 && i < numRows - 1 && gap - i + j * gap < size) {
+                    res += s[gap - i + j * gap];
+                }
+            }
+        }
+        
+        return res;
+    }
+};
+
+************************
+pr58. Length of Last Word, Easy
+
+Question:
+
+Given a string s consists of upper/lower-case alphabets and empty space characters ' ', return the length of last word (last word means the last appearing word if we loop from left to right) in the string.
+
+If the last word does not exist, return 0.
+
+Note: A word is defined as a maximal substring consisting of non-space characters only.
+
+Example:
+
+Input: "Hello World"
+Output: 5
+
+Tao: if input is "a ", then return 1.
+
+==
+Key: First skip the rightmost spaces, then check from right to left to see whether it is space.
+
+==
+C++ code:
+
+class Solution {
+public:
+    int lengthOfLastWord(string s) {
+        if(s.empty()) return 0;
+        int res = 0;
+        int begin = s.size() - 1;
+        while(s[begin] == ' ' && begin > 0) --begin;
+        for(int i = begin; i >= 0 && s[i] != ' '; --i) ++res;
+        return res;
+    }
+};
+
+************************
+pr139. Word Break, Medium
+
+Question:
+
+Given a non-empty string s and a dictionary wordDict containing a list of non-empty words, determine if s can be segmented into a space-separated sequence of one or more dictionary words.
+
+Note:
+
+The same word in the dictionary may be reused multiple times in the segmentation.
+You may assume the dictionary does not contain duplicate words.
+
+Example 1:
+
+Input: s = "leetcode", wordDict = ["leet", "code"]
+Output: true
+Explanation: Return true because "leetcode" can be segmented as "leet code".
+
+Example 2:
+
+Input: s = "applepenapple", wordDict = ["apple", "pen"]
+Output: true
+Explanation: Return true because "applepenapple" can be segmented as "apple pen apple".
+             Note that you are allowed to reuse a dictionary word.
+
+Example 3:
+
+Input: s = "catsandog", wordDict = ["cats", "dog", "sand", "and", "cat"]
+Output: false
+
+==
+Key: DP. Use res[i] to denote whether 'the string which equals the first i characters in s' can get true in wordBreak. Then derive res[i] from res[0, ... i - 1].
+
+==
+Tao's summary about DP:
+
+The key idea of DP is to store history results to avoid repetitive compuation (eg, avoid using recursion). In DP, we do not have to overwrite the history results in previous iteration (as in this problem), even though it is common to overwrite.
+
+In DP, should use res[i] to denote 'the string which equals the first i characters in s' can blabla, not to denote s[0, ... i] blabla. Because the latter can not deal with the case when 'the string which equals the first 0 characters in s' can blabla.
+
+==
+C++ code:
+(tao's code improved a little from leetcode discussion)
+
+class Solution {
+public:
+    bool wordBreak(string s, vector<string>& wordDict) {
+    	int n = s.size();
+    	if(n == 0) return true;
+
+        //res[i] means whether 'the string which equals the first i characters in s' can get true in wordBreak.
+        vector<bool> res(n + 1, false);
+    	res[0] = true;
+         
+    	for(int i = 1; i <= n; ++i) {
+            
+            // Calculate the value of res[i]:
+    		for(int j = 0; j <= i - 1; ++j) {
+    			// If res[j] = true and s.substr(j, i - j) is in wordDict, then set res[i] = true:
+    			if(res[j] && find(wordDict.begin(), wordDict.end(), s.substr(j, i - j)) != wordDict.end()) res[i] = true;
+    		}
+    	}
+        
+  		return res[n];     
+    }
+};
+
+************************
+pr140. Word Break II, Hard
+
+Question:
+
+Given a non-empty string s and a dictionary wordDict containing a list of non-empty words, add spaces in s to construct a sentence where each word is a valid dictionary word. Return all such possible sentences.
+
+Note:
+
+The same word in the dictionary may be reused multiple times in the segmentation.
+You may assume the dictionary does not contain duplicate words.
+Example 1:
+
+Input:
+s = "catsanddog"
+wordDict = ["cat", "cats", "and", "sand", "dog"]
+Output:
+[
+  "cats and dog",
+  "cat sand dog"
+]
+Example 2:
+
+Input:
+s = "pineapplepenapple"
+wordDict = ["apple", "pen", "applepen", "pine", "pineapple"]
+Output:
+[
+  "pine apple pen apple",
+  "pineapple pen apple",
+  "pine applepen apple"
+]
+Explanation: Note that you are allowed to reuse a dictionary word.
+Example 3:
+
+Input:
+s = "catsandog"
+wordDict = ["cats", "dog", "sand", "and", "cat"]
+Output:
+[]
+
+Tao: CodeGanker says there is a test case which is a long non-breakable string, this test case often leads to time limit exceeding. So we normally first determine whether s is breakable.
+
+==
+Key: DP. Samiliar to "pr 139. Word Break". The only difference from pr 139 is to change the "vector<bool> res" to "unordered_map<int, vector<string>> res_map", where res_map[i] denotes the vector returned by wordBreak("the string which equals the first i characters in s", wordDict).
+
+==
+C++ code:
+
+class Solution {
+private:
+    //res_map[i] means the output of wordBreak(first_i_characters_of_s, wordDict)
+    unordered_map<int, vector<string>> res_map;
+    
+    bool isBreakable(string s, vector<string>& wordDict) {
+    	(Copy the code of "pr 139. Word Break" here.) 
+    }
+    
+public:
+    vector<string> wordBreak(string s, vector<string>& wordDict) {
+        int n = s.size();
+        if(!isBreakable(s, wordDict)) return res_map[0];
+        
+        res_map[0] = {""};
+        
+        for(int i = 1; i <= n; ++i) {
+            vector<string> vec_i;
+            
+            // Calculate res_map[i]:
+            for(int j = 0; j <= i - 1; ++j) {
+                
+                //res[j], s.substr(j, i - j)                
+                string sub = s.substr(j, i - j);
+                                
+                if(res_map.find(j) != res_map.end() && find(wordDict.begin(), wordDict.end(), sub) != wordDict.end()) {
+                    vector<string> vec_j = res_map[j];                    
+                    for(string str_j: vec_j) {
+                        string push_str = str_j + (str_j.size() > 0 ? " " : "") + sub;
+                        vec_i.push_back(push_str);
+                    }                 
+                }              
+            } // End of j loop
+            
+            if(vec_i.size() > 0) res_map[i] = vec_i; //tao: first copies vec_i, then res_map[i] = the copy.
+
+        } // End of i loop
+        
+        return res_map[n];
+    }
+};
+
+************************
+pr44. Wildcard Matching, Hard
+
+Question:
+
+Given an input string (s) and a pattern (p), implement wildcard pattern matching with support for '?' and '*'.
+
+'?' Matches any single character.
+'*' Matches any sequence of characters (including the empty sequence).
+
+The matching should cover the entire input string (not partial).
+
+Note:
+
+s could be empty and contains only lowercase letters a-z.
+p could be empty and contains only lowercase letters a-z, and characters like ? or *.
+
+Example 1:
+
+Input:
+s = "aa"
+p = "a"
+Output: false
+Explanation: "a" does not match the entire string "aa".
+
+Example 2:
+
+Input:
+s = "aa"
+p = "*"
+Output: true
+Explanation: '*' matches any sequence.
+
+Example 3:
+
+Input:
+s = "cb"
+p = "?a"
+Output: false
+Explanation: '?' matches 'c', but the second letter is 'a', which does not match 'b'.
+
+Example 4:
+
+Input:
+s = "adceb"
+p = "*a*b"
+Output: true
+Explanation: The first '*' matches the empty sequence, while the second '*' matches the substring "dce".
+
+Example 5:
+
+Input:
+s = "acdcb"
+p = "a*c?b"
+Output: false
+
+==
+Key: 
+
+DP. Use an array m, and m[i][j] denotes whether "the first i chars of s" mathches "the first j chars of p".
+
+Goal: find m[i][j]
+
+Use the following notations:
+
+---- denotes "the first i - 1 chars of s"
+==== denotes "the first j - 1 chars of p", ---- maches ====
+++++ denotes "the first j - 1 chars of p", ---- does not mach ++++
+
+In ----a, 'a' is the i-th char of s 
+In ====b, 'b' is the j-th char of p 
+
+The "true" and "false" below ----a and ====b is whether ----a matches ====b
+
+There are the following cases:
+
+if m[i-1][j-1] = true:
+
+----a
+====b
+false
+
+----a
+====a
+true
+
+----a
+====?
+true
+
+----a
+====*
+true
+
+The followings should be read without word wrap in the editor:
+
+if m[i-1][j-1] = false:
+
+----a
+++++b
+false
+
+----a
+++++a
+false
+
+----a
+++++?
+false
+(Note that per rule, ? can not be empty)
+
+
+----a
+++++*
+
+
+If ----a is true: then ----a must be true, because we can always choose * as empty
+   ++++                ++++* 
+
+If ----a is false:  
+   ++++                 
+
+	If we choose * as empty, ----a is the same as ----a which is false
+                             ++++*                ++++
+	
+	If we choose * as not empty, 
+    If we choose * as xxb, then result is false. We do not need to consider this case, because the following * as xxa may be true. If * as xxa can be true, then ----a is true
+                                                                                                                                                                 ++++*
+		If we choose * as xxa, then ----a is   ----a  which is   ----
+                                    ++++*    ++++xxa           ++++xx
+
+                               now we need to know the resulf of   ----
+                                                                 ++++xx
+
+                               for this we can remove a rightmost letter from ---- each time, 
+                               if it matches ++++ at some stage then the result is true, otherwise result is false
+
+==
+C++ code:
+
+class Solution {
+public:
+    bool isMatch(string s, string p) {
+        int ns = s.size();
+        int np = p.size();
+
+        //m[i][j] denotes whether "the first i chars of s" mathches "the first j chars of p".
+        vector<vector<bool>> m(ns + 1, vector<bool>(np + 1, false));
+        m[0][0] = true;
+
+        for(int j = 1; j <= np; ++j) m[0][j] = m[0][j - 1] && (p[j - 1] == '*');
+
+        for(int i = 1; i <= ns; ++i) {
+          for(int j = 1; j <= np; ++j) {
+            char sim1 = s[i - 1], pjm1 = p[j - 1];
+
+            if(m[i - 1][j - 1]) {
+              if(pjm1 == sim1 || pjm1 == '?' || pjm1 == '*') m[i][j] = true;
+            } else {
+              if(pjm1 == '*') {
+                if(m[i][j - 1]) m[i][j] = true;
+                else for(int k = i - 1; k >= 0; --k) if(m[k][j - 1]) m[i][j] = true;
+              } else m[i][j] = false;            
+            }
+          }
+        }
+
+        return m[ns][np];
+    }
+};
+
+=================================================
+catarray
+
+************************
+pr1. Two Sum, Medium
+
+Question:
+
+Given an array of integers, return indices of the two numbers such that they add up to a specific target.
+
+You may assume that each input would have exactly one solution, and you may not use the same element twice. Tao: this means if the input has duplicates and if this caused multiple solutions, then just return one of these solutions.
+
+Example:
+
+Given nums = [2, 7, 11, 15], target = 9,
+
+Because nums[0] + nums[1] = 2 + 7 = 9,
+return [0, 1].
+
+Tao: note the elements in input array can have duplicates.
+
+==
+Key: Use map. Put an element as key, and the index of this element as value. The only tricky part is to deal with duplicate elements in the input array.
+
+==
+C++ code:
+(The leetcode discussion code is simpler, but tao's code is easier to work out, so still use tao's code below).
+
+class Solution {
+private:
+    unordered_map<int, int> map;
+    
+public:
+    vector<int> twoSum(vector<int>& nums, int target) {
+        int n = nums.size();
+        if(n < 2) return nums;
+        
+        for(int i = 0; i < n; ++i) {
+            int cur = nums[i];
+            int other = target - cur;
+            
+            if(map.find(cur) == map.end()) map[cur] = i;
+            
+            if(map.find(other) != map.end() && map[other] != i) {
+                vector<int> res = {map[other], i};
+                return res;
+            }
+        }
+        
+        return nums; // Will never reach this line.
+    }
+};
+
+************************
+pr167. Two Sum II - Input array is sorted, Medium
+
+Question: 
+
+Given an array of integers that is already sorted in ascending order, find two numbers such that they add up to a specific target number.
+
+The function twoSum should return indices of the two numbers such that they add up to the target, where index1 must be less than index2.
+
+Note:
+
+Your returned answers (both index1 and index2) are not zero-based.
+
+You may assume that each input would have exactly one solution and you may not use the same element twice.
+
+Example:
+
+Input: numbers = [2,7,11,15], target = 9
+Output: [1,2]
+
+Explanation: The sum of 2 and 7 is 9. Therefore index1 = 1, index2 = 2.
+
+==
+Key: Two pointers. Use two indices l and r. If numbers[l] + numbers[r] < target, then ++l, else --r.
+
+The proof is: denote the correct answer as (lExpected, rExpected). When moving l and r according the the above way, either l will first reach lExpected, or r will first reach rExpected. If l first reaches lExpected, then r must be on the right side of rExpected, which means numbers[l] + numbers[r] > target and so we need to --r. If r first reaches rExpected, we need to ++l for the same reason.
+
+==
+C++ code:
+
+class Solution {
+public:
+    vector<int> twoSum(vector<int>& numbers, int target) {
+        int l = 0, r = numbers.size() - 1;
+
+        while(l < r) {
+        	int cur_sum = numbers[l] + numbers[r];
+
+        	if(cur_sum == target) {
+        		vector<int> res = {l + 1, r + 1};
+        		return res;
+        	} else if(cur_sum < target) {
+        		++l;
+        	} else {
+        		--r;
+        	}
+        }
+
+    	return numbers; // Will never reach this line.
+    }
+};
+
+************************
+pr15. 3Sum, Medium
+
+Question:
+
+Given an array nums of n integers, are there elements a, b, c in nums such that a + b + c = 0? Find all unique triplets in the array which gives the sum of zero.
+
+Note:
+
+The solution set must not contain duplicate triplets.
+
+Example:
+
+Given array nums = [-1, 0, 1, 2, -1, -4],
+
+A solution set is:
+[
+  [-1, 0, 1],
+  [-1, -1, 2]
+]
+
+Tao: note the input array can have duplicate values.
+
+Tao: in the output, the order does not matter. In the above example, the following output can also pass:
+
+[
+  [1, 0, -1],
+  [2, -1, -1]
+]
+
+==
+Key:
+
+==
+C++ code:
+
+
+************************
+pr35. Search Insert Position, Medium.
+
+Question:
+
+Given a sorted array and a target value, return the index if the target is found. If not, return the index where it would be if it were inserted in order.
+
+You may assume no duplicates in the array.
+
+Example 1:
+
+Input: [1,3,5,6], 5
+Output: 2
+
+Example 2:
+
+Input: [1,3,5,6], 2
+Output: 1
+
+Example 3:
+
+Input: [1,3,5,6], 7
+Output: 4
+
+Example 4:
+
+Input: [1,3,5,6], 0
+Output: 0
+
+
+==
+Key: Binary search. This problem can be used as a formula for binary search. Tao's code uses the Chiu Chang template: always use while(l < r - 1), which means that after the while, l and r are two neighboring numbers.
+
+==
+C++ code:
+
+class Solution {
+public:
+    int searchInsert(vector<int>& nums, int target) {
+    	int n = nums.size();
+        if(n == 0) return 0;
+
+        int l = 0, r = n - 1;
+
+        while(l < r - 1) {
+        	int m = (l + r) / 2;
+
+        	if(target == nums[m]) return m;
+        	else if(target < nums[m]) r = m;
+        	else l = m;
+        }
+
+        if(target <= nums[l]) return l;
+        if(target <= nums[r]) return r;
+        if(target > nums[r]) return r + 1;
+
+        return 0;
+    }
+};
+
+=================================================
+catboard
+
+************************
+pr36. Valid Sudoku, Easy
+
+Question:
+
+Determine if a 9x9 Sudoku board is valid. Only the filled cells need to be validated according to the following rules:
+
+Each row must contain the digits 1-9 without repetition.
+Each column must contain the digits 1-9 without repetition.
+Each of the 9 3x3 sub-boxes of the grid must contain the digits 1-9 without repetition.
+
+(Tao: there is a picture here, which is the same as the input matrix below in Example 1)
+
+A partially filled sudoku which is valid.
+
+The Sudoku board could be partially filled, where empty cells are filled with the character '.'.
+
+Example 1:
+
+Input:
+[
+  ["5","3",".",".","7",".",".",".","."],
+  ["6",".",".","1","9","5",".",".","."],
+  [".","9","8",".",".",".",".","6","."],
+  ["8",".",".",".","6",".",".",".","3"],
+  ["4",".",".","8",".","3",".",".","1"],
+  ["7",".",".",".","2",".",".",".","6"],
+  [".","6",".",".",".",".","2","8","."],
+  [".",".",".","4","1","9",".",".","5"],
+  [".",".",".",".","8",".",".","7","9"]
+]
+
+Output: true
+
+Example 2:
+
+Input:
+[
+  ["8","3",".",".","7",".",".",".","."],
+  ["6",".",".","1","9","5",".",".","."],
+  [".","9","8",".",".",".",".","6","."],
+  ["8",".",".",".","6",".",".",".","3"],
+  ["4",".",".","8",".","3",".",".","1"],
+  ["7",".",".",".","2",".",".",".","6"],
+  [".","6",".",".",".",".","2","8","."],
+  [".",".",".","4","1","9",".",".","5"],
+  [".",".",".",".","8",".",".","7","9"]
+]
+
+Output: false
+
+Explanation: Same as Example 1, except with the 5 in the top left corner being modified to 8. Since there are two 8's in the top left 3x3 sub-box, it is invalid.
+
+Note:
+
+A Sudoku board (partially filled) could be valid but is not necessarily solvable.
+Only the filled cells need to be validated according to the mentioned rules.
+The given board contain only digits 1-9 and the character '.'.
+The given board size is always 9x9.
+
+Tao: note that in the code, the type of elments in board is char, not int.
+
+==
+Key: Brute force. To check the sub-boxes (called "blocks" by tao), the easiest way is to write a 4-layer loop. This way can be worked out without thinking. The challenging thing is how to check blocks in a 2-layer loop.
+
+Tao's way of checking the blocks in a 2-layer loop in the code below is different from leetcode discussion (and Code Ganker's Java code uses a 3-layer loop). But they are similar, and Tao's way is easier to understand. So I use Tao's way.
+
+The way to figure out Tao's way is following:
+
+I name the blocks in each position as below:
+
+block_0  block_3   block_6
+block_1  block_4   block_7
+block_2  block_5   block_8
+
+In the following, i and j are loop variables.
+The i in (i, j) loop and block_i are the same number.
+
+Let me use r to denote row index, c to denote column index. 
+The following formula gives the row and column of an element in block_i:
+
+r = (i % 3) * 3 + j / 3
+c = (i / 3) * 3 + j % 3
+
+The above formula can be derived from the following example:
+
+block_0    block_1    block_3
+
+i j r c    i j r c    i j r c
+
+0 0 0 0    1 0 3 0    3 0 0 3
+0 1 0 1    1 1 3 1    3 1 0 4
+0 2 0 2    1 2 3 2    3 2 0 5
+
+0 3 1 0    1 3 4 0    3 3 1 3
+0 4 1 1    1 4 4 1    3 4 1 4
+0 5 1 2    1 5 4 2    3 5 1 5
+
+0 6 2 0    1 6 5 0    3 6 2 3
+0 7 2 1    1 7 5 1    3 7 2 4
+0 8 2 2    1 8 5 2    3 8 2 5
+
+==
+C++ code:
+
+The following 3-pass code is recommended, because it is easier to write and understand. It can be easily re-written to a 1-pass code which is also pasted below this code.
+
+class Solution {
+public:
+    bool isValidSudoku(vector<vector<char>>& board) {
+    	unordered_set<char> char_set;
+
+    	//Check rows
+    	for(int i = 0; i < 9; ++i) {
+    		for(int j = 0; j < 9; ++j) {
+    			char c = board[i][j];
+    			if(c == '.') continue;
+    			if(char_set.find(c) == char_set.end()) char_set.insert(c);
+	 			else return false;
+    		}
+    		char_set.clear();
+    	}
+       
+    	//Check columns
+    	for(int i = 0; i < 9; ++i) {
+    		for(int j = 0; j < 9; ++j) {
+    			char c = board[j][i];
+    			if(c == '.') continue;
+    			if(char_set.find(c) == char_set.end()) char_set.insert(c);
+	 			else return false;
+    		}
+    		char_set.clear();
+    	}
+
+    	//Check blocks
+    	for(int i = 0; i < 9; ++i) {
+    		for(int j = 0; j < 9; ++j) {
+    			int row = (i % 3) * 3 + j / 3;
+				int col = (i / 3) * 3 + j % 3;
+    			char c = board[row][col];
+    			if(c == '.') continue;
+    			if(char_set.find(c) == char_set.end()) char_set.insert(c);
+	 			else return false;
+    		}
+    		char_set.clear();
+    	}		
+
+        return true;
+    }
+};
+
+The above code can be easily re-written as a 1-pass code as below, but I do not recommend this code because it is harder to understand:
+
+class Solution {
+public:
+    bool isValidSudoku(vector<vector<char>>& board) {
+    	unordered_set<char> row_set;
+    	unordered_set<char> column_set;
+    	unordered_set<char> block_set;
+
+    	for(int i = 0; i < 9; ++i) {
+    		for(int j = 0; j < 9; ++j) {
+
+    			char row_c = board[i][j];
+    			char column_c = board[j][i];
+    			char block_c = board[(i % 3) * 3 + j / 3][(i / 3) * 3 + j % 3];
+
+    			if(row_c == '.') {}
+    			else if(row_set.find(row_c) == row_set.end()) row_set.insert(row_c);
+	 			else return false;
+
+	 			if(column_c == '.') {}
+	 			else if(column_set.find(column_c) == column_set.end()) column_set.insert(column_c);
+	 			else return false;
+
+	 			if(block_c == '.') {}
+	 			else if(block_set.find(block_c) == block_set.end()) block_set.insert(block_c);
+	 			else return false;
+
+    		}
+
+    		row_set.clear();
+    		column_set.clear();
+    		block_set.clear();
+    	}
+
+        return true;
+    }
+};
+
+=================================================
+catcombinatorics
+
+************************
+pr46. Permutations, Medium
+
+Question:
+
+Given a collection of distinct integers, return all possible permutations.
+
+Example:
+
+Input: [1,2,3]
+Output:
+[
+  [1,2,3],
+  [1,3,2],
+  [2,1,3],
+  [2,3,1],
+  [3,1,2],
+  [3,2,1]
+]
+
+
+==
+Key: Recursion. Put aside the first element, permute all other elements, then put the first element into all possible positions.
+
+==
+C++ code:
+
+(CodeGanker's classic Java code is more complicated. Leetcode discussion code is similar as Tao's following code.)
+
+class Solution {
+private:
+	vector<vector<int>> permute_subvec(vector<int>& nums, int i) {
+		vector<vector<int>> res;
+
+		if(i == nums.size() - 1) {
+			vector<int> last = {nums[i]};
+			res.push_back(last);
+			return res;
+		}
+
+		vector<vector<int>> sub = permute_subvec(nums, i + 1);
+
+		for(vector<int> vec: sub) {
+			for(int j = 0; j <= vec.size(); ++j) {//Tried to use iterator but had run-time error.
+				vec.insert(vec.begin() + j, nums[i]);
+				vector<int> vec_copy = vec;
+				res.push_back(vec_copy);
+				vec.erase(vec.begin() + j);
+			}
+		}
+
+		return res;
+	}
+
+public:
+    vector<vector<int>> permute(vector<int>& nums) {
+    	vector<vector<int>> res;
+    	if(nums.size() == 0) return res;
+        return permute_subvec(nums, 0);
+    }
+};
+
+=================================================
+catinterval
+
+************************
+pr56. Merge Intervals, Hard
+
+Question:
+
+Given a collection of intervals, merge all overlapping intervals.
+
+Example 1:
+
+Input: [[1,3],[2,6],[8,10],[15,18]]
+Output: [[1,6],[8,10],[15,18]]
+Explanation: Since intervals [1,3] and [2,6] overlaps, merge them into [1,6].
+
+Example 2:
+
+Input: [[1,4],[4,5]]
+Output: [[1,5]]
+Explanation: Intervals [1,4] and [4,5] are considered overlapping.
+
+Tao: 
+1. [1, 2] and [3, 4] does not overlap. [1, 2] and [2, 4] overlaps and will be merged to [1, 4].
+2. [2, 2] is also an interval.
+
+==
+Key: First sort the intervals. Then traverse the intervals, use two pointers pre and cur. If pre and cur overlaps, merge them.
+
+==
+C++ code:
+
+(Tao's code below was simplified according to leetcode discussion code)
+
+class Solution {
+private:
+	static bool compare_interval(Interval x, Interval y) {
+		return x.start < y.start; //If written as x.start <= y.start, then the following sort gives correct result but is very slow. Not sure why.
+	}
+
+public:
+    vector<Interval> merge(vector<Interval>& intervals) {
+     	int n = intervals.size();
+     	if(n <= 1) return intervals;
+     	
+     	vector<Interval> res;
+	
+		sort(intervals.begin(), intervals.end(), compare_interval);
+
+		Interval pre = intervals[0];
+				
+		for(int i = 1; i < n; ++i) {
+			Interval cur = intervals[i];
+
+			//pre and cur overlaps
+			if(cur.start <= pre.end) {
+				//Merge pre and cur, notice the trick of changing pre.end.
+				pre.end = max(pre.end, cur.end); 
+			} else {
+				res.push_back(pre);
+				pre = cur;
+			}
+
+		}
+
+		res.push_back(pre);
+
+		return res;   
+    }
+};
+
+=================================================
+catarithmetics
+
+************************
+pr7. Reverse Integer, Easy 
+
+Question:
+
+Given a 32-bit signed integer, reverse digits of an integer.
+
+Example 1:
+
+Input: 123
+Output: 321
+
+Example 2:
+
+Input: -123
+Output: -321
+Example 3:
+
+Input: 120
+Output: 21
+
+Note:
+Assume we are dealing with an environment which could only store integers within the 32-bit signed integer range: [−2^31,  2^31 − 1]. For the purpose of this problem, assume that your function returns 0 when the reversed integer overflows.
+
+Tao: the problem assues that an int in C++ is 32 bits (4 bytes), which is different from the 2 bytes int my cpp_notes.
+
+==
+Key: Reverse the input x using "res = res * 10 + (x % 10)". Rememeber to deal with overflow before calculating res in this formula. If x is negative, call reverse(-x). The only corner case of this problem is when x = INT_MIN, -x overflows, so in this case just return 0 directly. 
+
+==
+C++ code:
+
+#include<iostream>
+#include<climits>
+using namespace std;
+
+class Solution {
+public:
+    int reverse(int x) {
+    	if(x == INT_MIN) return 0;
+    	if(x < 0) return -reverse(-x);
+
+        int res = 0;
+
+        while(x > 0) {
+        	int last = x % 10;
+        	if(res > (INT_MAX - last) / 10) return 0;
+        	res = res * 10 + last;
+        	x /= 10;
+        }
+
+        return res;
+    }
+};
+
+************************
+pr66. Plus One, Easy
+
+Question:
+
+Given a non-empty array of digits representing a non-negative integer, plus one to the integer.
+
+The digits are stored such that the most significant digit is at the head of the list, and each element in the array contain a single digit.
+
+You may assume the integer does not contain any leading zero, except the number 0 itself.
+
+Example 1:
+
+Input: [1,2,3]
+Output: [1,2,4]
+Explanation: The array represents the integer 123.
+
+Example 2:
+
+Input: [4,3,2,1]
+Output: [4,3,2,2]
+Explanation: The array represents the integer 4321.
+
+==
+Key: 簡單.題目的意思是 輪入數組代表的數 是十进製的,不是二进製.digit[0]是最高位. 注意可以直接在輪入 數組裡改, 這樣空間複雜度一般情況為O(1). 只有一種情況要用新數組來保存結果, 那就是輪入數組每個元素 都是 9, 此時結果比輸入的數多一位.
+
+==
+C++ code:
+(按Discussion略作改進)
+
+class Solution {
+public:
+    vector<int> plusOne(vector<int>& digits) {
+        int n = digits.size();
+        if(n <= 0) return digits;
+
+        int carry = 1;
+
+        for(int i = n - 1; i >= 0; --i) {
+        	int sum = digits[i] + carry;
+        	digits[i] = sum % 10;
+        	carry = sum / 10;
+        }
+
+		// In the original input, all digits are 9:
+        if(digits[0] == 0) digits.insert(digits.begin(), 1);
+
+        return digits;
+    }
+};
+
+=================================================
+catsystem
+
+************************
+pr146. LRU Cache, Hard
+
+Question:
+
+Design and implement a data structure for Least Recently Used (LRU) cache. It should support the following operations: get and put.
+
+get(key) - Get the value (will always be positive) of the key if the key exists in the cache, otherwise return -1.
+put(key, value) - Set or insert the value if the key is not already present. When the cache reached its capacity, it should invalidate the least recently used item before inserting a new item.
+
+Follow up:
+Could you do both operations in O(1) time complexity?
+
+Example:
+
+LRUCache cache = new LRUCache( 2 /* capacity */ );
+
+cache.put(1, 1);
+cache.put(2, 2);
+cache.get(1);       // returns 1
+cache.put(3, 3);    // evicts key 2
+cache.get(2);       // returns -1 (not found)
+cache.put(4, 4);    // evicts key 1
+cache.get(1);       // returns -1 (not found)
+cache.get(3);       // returns 3
+cache.get(4);       // returns 4
+
+Tao: both put and get increase the priority of the element. For put, if a key is already there, it updates the value and makes this element the highest priority, if a key is not there, it creates the node and makes this element the highest priority.
+
+==
+Key: Use a doubly linked list and a map. The node of the list contains information of (key, value). The map's key is the key, value is pointer to the node. Whenever an element is visited, move it to the front of the list. When the cache reaches its capacity, remove the tail of the list. CodeGanker also did in this way.
+
+==
+C++ code:
+
+struct Node {
+	int key, val;
+	Node* prev;
+	Node* next;
+	Node(int key_, int val_): key(key_), val(val_), prev(NULL), next(NULL) {}
+};
+
+class LRUCache {
+private:
+	int cap;
+	unordered_map<int, Node*> node_map;
+	//Practice shows that the following two lines can not be written as: Node* prev, next;
+	Node* head; 
+	Node* tail;
+
+	void move_to_top(Node* node) {
+		if(head == tail || head == node) return;
+		if(tail == node) tail = node->prev;
+    	if(node->prev) node->prev->next = node->next;
+    	if(node->next) node->next->prev = node->prev;
+    	node->next = head;
+   		head->prev = node;
+   		head = node; 	
+	}
+
+	void remove_tail() {
+		node_map.erase(tail->key);
+		if(tail->prev) tail->prev->next = NULL;
+		tail = tail->prev;
+	}
+
+public:
+    LRUCache(int capacity) {
+        cap = capacity;
+    }
+    
+    int get(int key) {
+        if(node_map.find(key) == node_map.end()) { 
+        	return -1;	
+        } else {
+        	Node* node = node_map[key];
+        	move_to_top(node);
+        	return node->val;
+        }
+    }
+    
+    void put(int key, int value) {
+    	Node* node;
+        
+        if(node_map.find(key) == node_map.end()) {
+        	if(node_map.size() == cap) remove_tail();
+
+        	node = new Node(key, value);
+
+        	if(node_map.size() == 0) {
+        		head = node;
+        		tail = node;
+        	} else {
+	        	node->next = head;
+	       		head->prev = node;
+	       		head = node; 
+       		}
+       		
+       		node_map[key] = node;
+
+        } else {
+        	node = node_map[key];
+        	node->val = value;
+        	move_to_top(node);
+        }
+        
+    }
+};
+
+************************
+pr232. Implement Queue using Stacks, Easy. 
+
+Question:
+
+Implement the following operations of a queue using stacks.
+
+push(x) -- Push element x to the back of queue.
+pop() -- Removes the element from in front of queue.
+peek() -- Get the front element.
+empty() -- Return whether the queue is empty.
+
+Example:
+
+MyQueue queue = new MyQueue();
+
+queue.push(1);
+queue.push(2);  
+queue.peek();  // returns 1
+queue.pop();   // returns 1
+queue.empty(); // returns false
+Notes:
+
+You must use only standard operations of a stack -- which means only push to top, peek/pop from top, size, and is empty operations are valid.
+Depending on your language, stack may not be supported natively. You may simulate a stack by using a list or deque (double-ended queue), as long as you use only standard operations of a stack.
+You may assume that all operations are valid (for example, no pop or peek operations will be called on an empty queue).
+
+注意：
+1. 本題已經假定 用户每次調用pop()前，都會先調用empty(). 即只有在MyQueue不為空的時候，才會执行pop().
+2. 當整個MyQueue都為空時，peek()返回的值不能為一個 空stack的top()的返回值，而應當返回-1, 否則不會通過.
+
+==
+Key: 用兩個stack, 放東西(push)時放入stack1, 拿東西時(peek/pop)從stack2中拿. 若 stack2為空, 則將stack1中所有的元素都弄到stack2中去. 先寫peek, 再寫其它的.
+
+==
+C++ code:
+
+class MyQueue {
+private: 
+	stack<int> stack1, stack2;
+
+public:
+    /** Initialize your data structure here. */
+    MyQueue() {
+    	    
+    }
+    
+    /** Push element x to the back of queue. */
+    void push(int x) {
+        stack1.push(x);
+    }
+    
+    /** Removes the element from in front of queue and returns that element. */
+    int pop() {        
+        int res = peek();
+        stack2.pop();
+        return res;
+    }
+    
+    /** Get the front element. */
+    int peek() {
+    	if(stack2.empty()) {
+    		while(!stack1.empty()) {
+    			stack2.push(stack1.top());
+    			stack1.pop();
+    		}
+    	} 
+
+        if(stack2.empty()) return -1; //本句話是必需的，否則通不過
+    	return stack2.top();
+    }
+    
+    /** Returns whether the queue is empty. */
+    bool empty() {
+        return stack1.empty() && stack2.empty();
+    }
+};
+=================================================
+catbit
+
+************************
+pr190. Reverse Bits, Easy
+
+Question:
+
+Reverse bits of a given 32 bits unsigned integer.
+
+Example:
+
+Input: 43261596
+Output: 964176192
+Explanation: 43261596 represented in binary as 00000010100101000001111010011100, 
+             return 964176192 represented in binary as 00111001011110000010100101000000.
+Follow up:
+If this function is called many times, how would you optimize it?
+
+Tao: 
+
+uint32_t: unsigned integer type with width of exactly 8, 16, 32 and 64 bits respectively. Defined in header <cstdint>.
+
+For checking, printing numbers in binary format:
+#include <bitset>
+using namespace std;
+int v = 5;
+cout << bitset<32>(v); //32 means outputs 32 bits
+
+Correct: 00000000000000000000000000000001 -> 10000000000000000000000000000000
+Wrong:   00000000000000000000000000000001 -> 00000000000000000000000000000001
+
+==
+Key: Obtain the last digit of n (n >> i & 1). Left shift result (res << 1), and adds the last digit of n to the left shifed res. Try to use only bit operations.
+
+==
+C++ code:
+
+Below uses leecode discussion and William's code combined, which uses only bit operations. Tao's code used plus and % operators which may be slower than bit operations.
+
+class Solution {
+public:
+    uint32_t reverseBits(uint32_t n) {
+    	uint32_t res = 0;
+
+        for(int i = 0; i < 32; ++i) 
+        	res = (res << 1) | (n >> i & 1);
+        
+        return res;
+    }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
